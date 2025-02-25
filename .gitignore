@@ -2,6 +2,11 @@
 
 # dependencies
 node_modules/
+*/node_modules/*
+*/.venv/*
+*/venv/*
+ui_sample
+*service-account.json*
 
 # Expo
 .expo/
@@ -31,6 +36,18 @@ yarn-error.*
 
 # local env files
 .env*.local
+.env
+*.env*
+*.env
+
+google-services.json
+GoogleService-Info.plist
+
+.firebaserc
+firebase.json
+firestore.indexes.json
+firestore.rules
+android/gradle.properties
 
 # typescript
 *.tsbuildinfo

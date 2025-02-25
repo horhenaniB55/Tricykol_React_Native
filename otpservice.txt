@@ -1,0 +1,16 @@
+➜   curl -X POST \
+  https://otp-service-666017533126.asia-southeast1.run.app/send-otp \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "phone": "+639670575500"
+  }'
+{"success":true,"message":"OTP sent successfully"}%                                                                                                                                                                                          jurj@archlinux: /home/jurj/extended-storage/react_native/Tricykol_Driver/otp-service git:(master) ✗
+➜   curl -X POST \
+  https://otp-service-666017533126.asia-southeast1.run.app/verify-otp \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "phone": "+639670575500",
+    "otp": "468008"
+  }'
+{"success":true,"token":"eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJodHRwczovL2lkZW50aXR5dG9vbGtpdC5nb29nbGVhcGlzLmNvbS9nb29nbGUuaWRlbnRpdHkuaWRlbnRpdHl0b29sa2l0LnYxLklkZW50aXR5VG9vbGtpdCIsImlhdCI6MTc0MDQxNjQ2NywiZXhwIjoxNzQwNDIwMDY3LCJpc3MiOiI2NjYwMTc1MzMxMjYtY29tcHV0ZUBkZXZlbG9wZXIuZ3NlcnZpY2VhY2NvdW50LmNvbSIsInN1YiI6IjY2NjAxNzUzMzEyNi1jb21wdXRlQGRldmVsb3Blci5nc2VydmljZWFjY291bnQuY29tIiwidWlkIjoiQ0pkQ1B6SmNnaVFNV0JVa1V5aG41VzFXQ2pxMSJ9.l0lt76LqjfpWfjqIGKrD4Q_ajR6rvMiNlL_dvrPlQ8wYLfF5_pAyJZ_YmQ9LGbeZjonI6-6tBo1LysseBKFF_gPuGVyRZUU4_fLEH-tPEvYqtFlIOWRpAq0T093YLturqei7uVcHiwOm4q17ySRkICa78I2zIYQDS6asvzA8P-xAgrY-e_LTBkoC5llB4_rvid8v0vMqJyJD5cs6ARRMG-eJjXd5e3mAr9mBIZyi_Ix5p5OqgHa8nDicR0sBZFMkHQYgiOx7GD4eUWQwQpLjRoT-nHSBEC7hHaa02REVdREF7cbey2CHGYil1aCeFUnipQhyuYCf4kgsFvCRaJ7HAA","uid":"CJdCPzJcgiQMWBUkUyhn5W1WCjq1","isNewUser":false}%                                                                                                     
+
