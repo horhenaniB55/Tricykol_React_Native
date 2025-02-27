@@ -79,14 +79,35 @@ export const AuthService = {
       const user = getAuth().currentUser;
       console.log('Auth state before Firestore access:', user ? `Authenticated as ${user.uid}` : 'Not authenticated');
       
-      // First, check if the driver document exists
-      const driverDoc = await getDoc('drivers', uid).get();
+      // Get driver document and wallet document
+      const [driverDoc, walletDoc] = await Promise.all([
+        getDoc('drivers', uid).get(),
+        getDoc('wallets', uid).get()
+      ]);
       
       if (driverDoc.exists) {
-        console.log('Driver profile found:', driverDoc.data());
+        const driverData = driverDoc.data();
+        let walletBalance = 0;
+
+        if (walletDoc.exists) {
+          walletBalance = walletDoc.data().balance || 0;
+          console.log('Wallet found with balance:', walletBalance);
+        } else {
+          // Create wallet if it doesn't exist
+          await getCollection('wallets').doc(uid).set({
+            balance: 300, // Free 300 pesos for verified driver
+            createdAt: FieldValue.serverTimestamp(),
+            updatedAt: FieldValue.serverTimestamp()
+          });
+          walletBalance = 300;
+          console.log('Created new wallet with initial balance:', walletBalance);
+        }
+
+        console.log('Driver profile found:', { ...driverData, walletBalance });
         return {
           id: driverDoc.id,
-          ...driverDoc.data()
+          ...driverData,
+          walletBalance
         };
       }
       
@@ -171,5 +192,25 @@ export const AuthService = {
     } : 'Not authenticated');
     
     return user;
-  }
+  },
+
+  /**
+   * Update driver status in Firestore
+   * @param {string} driverId - Driver's ID
+   * @param {string} status - New status ('online' or 'offline')
+   * @returns {Promise<void>}
+   */
+  async updateDriverStatus(driverId, status) {
+    console.log(`Updating driver status for ${driverId} to ${status}`);
+    try {
+      await getFirestore().collection('drivers').doc(driverId).update({
+        status: status,
+        updatedAt: FieldValue.serverTimestamp(), // Update the timestamp
+      });
+      console.log('Driver status updated successfully');
+    } catch (error) {
+      console.error('Error updating driver status:', error);
+      throw new Error('Failed to update driver status');
+    }
+  },
 };

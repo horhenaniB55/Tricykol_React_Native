@@ -1,0 +1,51 @@
+{
+  "places": [
+    {
+      "id": "place.8652979",
+      "name": "Paniqui",
+      "fullName": "Paniqui, Tarlac, Philippines",
+      "coordinates": {
+        "longitude": 120.57797,
+        "latitude": 15.668462
+      },
+      "type": "place",
+      "category": "general"
+    }
+  ],
+  "barangays": [
+    {
+      "id": "place.8652979",
+      "name": "Paniqui",
+      "fullName": "Paniqui, Tarlac, Philippines",
+      "coordinates": {
+        "longitude": 120.57797,
+        "latitude": 15.668462
+      },
+      "type": "place",
+      "category": "barangay"
+    }
+  ],
+  "landmarks": [
+    {
+      "id": "place.8652979",
+      "name": "Paniqui",
+      "fullName": "Paniqui, Tarlac, Philippines",
+      "coordinates": {
+        "longitude": 120.57797,
+        "latitude": 15.668462
+      },
+      "type": "place",
+      "category": "school"
+    }
+  ],
+  "metadata": {
+    "center": {
+      "latitude": 15.6661,
+      "longitude": 120.5586
+    },
+    "timestamp": "2025-02-26T00:29:26Z",
+    "totalPlaces": 1,
+    "totalBarangays": 1,
+    "totalLandmarks": 1
+  }
+}

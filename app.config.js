@@ -17,15 +17,32 @@ export default {
     ios: {
       supportsTablet: true,
       bundleIdentifier: "com.tricykol.driver",
-      googleServicesFile: "./GoogleService-Info.plist"
+      googleServicesFile: "./GoogleService-Info.plist",
+      config: {
+        googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY
+      },
+      infoPlist: {
+        NSLocationWhenInUseUsageDescription: "This app needs access to location when open to show your position on the map.",
+        NSLocationAlwaysUsageDescription: "This app needs access to location when in the background for navigation.",
+        UIBackgroundModes: ["location"]
+      }
     },
     android: {
       googleServicesFile: "./google-services.json",
+      config: {
+        googleMaps: {
+          apiKey: process.env.GOOGLE_MAPS_API_KEY
+        },
+        locationServices: {
+          promptOnLowAccuracy: false
+        }
+      },
       permissions: [
         "INTERNET",
         "ACCESS_NETWORK_STATE",
         "ACCESS_FINE_LOCATION",
-        "ACCESS_COARSE_LOCATION"
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION"
       ],
       package: "com.tricykol.driver",
       adaptiveIcon: {
@@ -42,17 +59,22 @@ export default {
           }
         }
       ],
-      ["@rnmapbox/maps", {
-        RNMapboxMapsImpl: "mapbox",
-        RNMapboxMapsDownloadToken: process.env.MAPBOX_ACCESS_TOKEN,
-        RNMapboxMapsVersion: "10.16.2"
-      }],
+      [
+        "expo-location",
+        {
+          locationAlwaysAndWhenInUsePermission: "Allow Tricykol Driver to use your location.",
+          locationWhenInUsePermission: "Allow Tricykol Driver to use your location.",
+          isIosBackgroundLocationEnabled: true,
+          isAndroidBackgroundLocationEnabled: true,
+          enableBackgroundLocationUpdates: false
+        }
+      ]
     ],
     web: {
       favicon: "./assets/favicon.png"
     },
     extra: {
-      mapboxAccessToken: process.env.MAPBOX_ACCESS_TOKEN
+      googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY
     }
   }
 };

@@ -1,12 +1,14 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { COLORS } from '../../constants';
+import React from "react";
+import { View, Text, StyleSheet } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { COLORS } from "../../constants";
+import { AppBar } from "../../components/common";
 
 export const WalletScreen = () => {
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.container}>
+    <SafeAreaView edges={['top','left', 'right']} style={styles.safeArea}>
+      <AppBar />
+      <View style={styles.content}>
         <Text style={styles.text}>Wallet Screen</Text>
       </View>
     </SafeAreaView>
@@ -14,11 +16,14 @@ export const WalletScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
+    flex: 1,
+    backgroundColor: COLORS.BACKGROUND,
+  },
+  content: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: COLORS.BACKGROUND,
   },
   text: {
     fontSize: 16,

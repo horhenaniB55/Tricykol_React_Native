@@ -13,11 +13,6 @@ install! 'cocoapods',
 
 prepare_react_native_project!
 
-# @generated begin @rnmapbox/maps-rnmapboxmapsimpl - expo prebuild (DO NOT MODIFY) sync-9dc69d00ff3e13d47dfd00a8a614d75c356ad33d
-$RNMapboxMapsDownloadToken = 'sk.eyJ1IjoiaG9yaGUiLCJhIjoiY203aWk3ZHkxMDg4NjJtczlsMTg3dTI0ZiJ9.ywlBpZ7iVHD9CAOMuq9IrQ'
-$RNMapboxMapsImpl = 'mapbox'
-$RNMapboxMapsVersion = '10.16.2'
-# @generated end @rnmapbox/maps-rnmapboxmapsimpl
 target 'TricykolDriver' do
   use_expo_modules!
 
@@ -36,18 +31,14 @@ target 'TricykolDriver' do
     ]
   end
 
+# @generated begin react-native-maps - expo prebuild (DO NOT MODIFY) sync-e9cc66c360abe50bc66d89fffb3c55b034d7d369
+  pod 'react-native-google-maps', path: File.dirname(`node --print "require.resolve('react-native-maps/package.json')"`)
+# @generated end react-native-maps
   config = use_native_modules!(config_command)
 
   use_frameworks! :linkage => podfile_properties['ios.useFrameworks'].to_sym if podfile_properties['ios.useFrameworks']
   use_frameworks! :linkage => ENV['USE_FRAMEWORKS'].to_sym if ENV['USE_FRAMEWORKS']
 
-# @generated begin pre_installer - expo prebuild (DO NOT MODIFY) sync-c8812095000d6054b846ce74840f0ffb540c2757
-  pre_install do |installer|
-# @generated begin @rnmapbox/maps-pre_installer - expo prebuild (DO NOT MODIFY) sync-ea4905840bf9fcea0acc62e92aa2e784f9d760f8
-    $RNMapboxMaps.pre_install(installer)
-# @generated end @rnmapbox/maps-pre_installer
-  end
-# @generated end pre_installer
   use_react_native!(
     :path => config[:reactNativePath],
     :hermes_enabled => podfile_properties['expo.jsEngine'] == nil || podfile_properties['expo.jsEngine'] == 'hermes',
@@ -57,9 +48,6 @@ target 'TricykolDriver' do
   )
 
   post_install do |installer|
-# @generated begin @rnmapbox/maps-post_installer - expo prebuild (DO NOT MODIFY) sync-c4e8f90e96f6b6c6ea9241dd7b52ab5f57f7bf36
-    $RNMapboxMaps.post_install(installer)
-# @generated end @rnmapbox/maps-post_installer
     react_native_post_install(
       installer,
       config[:reactNativePath],

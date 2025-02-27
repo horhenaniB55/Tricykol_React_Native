@@ -1,4 +1,4 @@
-React native with Expo, JavaScript, Classic routing/router, Firebase(React native firebase sdk), Zustand, Mapbox
+React native with Expo, JavaScript, Classic routing/router, Firebase(React native firebase sdk), Zustand, Google Maps
 
 Models:
 
@@ -221,8 +221,11 @@ Services
 Map Features
  - realtime location
  - realtime map view
- - MapBox API
- - Directions from MapBox API
+ - Google Maps API
+ - Directions from Google maps
+ - Places api new(search places) - google
+ - Routes api - google
+ - Distance Matrix api - google
     
 
 OTP Authentication

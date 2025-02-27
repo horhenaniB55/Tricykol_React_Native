@@ -1,0 +1,757 @@
+{
+  "general": [
+    {
+      "id": "place.8652979",
+      "type": "Feature",
+      "place_type": [
+        "place"
+      ],
+      "relevance": 1,
+      "properties": {
+        "mapbox_id": "dXJuOm1ieHBsYzpoQWl6",
+        "wikidata": "Q56457"
+      },
+      "text": "Paniqui",
+      "place_name": "Paniqui, Tarlac, Philippines",
+      "bbox": [
+        120.469048,
+        15.62498,
+        120.617943,
+        15.72137
+      ],
+      "center": [
+        120.57797,
+        15.668462
+      ],
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          120.57797,
+          15.668462
+        ]
+      },
+      "context": [
+        {
+          "id": "region.656563",
+          "mapbox_id": "dXJuOm1ieHBsYzpDZ1N6",
+          "wikidata": "Q13892",
+          "short_code": "PH-TAR",
+          "text": "Tarlac"
+        },
+        {
+          "id": "country.8883",
+          "mapbox_id": "dXJuOm1ieHBsYzpJck0",
+          "wikidata": "Q928",
+          "short_code": "ph",
+          "text": "Philippines"
+        }
+      ]
+    }
+  ],
+  "categories": {
+    "barangay": [
+      {
+        "id": "place.8652979",
+        "type": "Feature",
+        "place_type": [
+          "place"
+        ],
+        "relevance": 0.683333,
+        "properties": {
+          "mapbox_id": "dXJuOm1ieHBsYzpoQWl6",
+          "wikidata": "Q56457"
+        },
+        "text": "Paniqui",
+        "place_name": "Paniqui, Tarlac, Philippines",
+        "bbox": [
+          120.469048,
+          15.62498,
+          120.617943,
+          15.72137
+        ],
+        "center": [
+          120.57797,
+          15.668462
+        ],
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            120.57797,
+            15.668462
+          ]
+        },
+        "context": [
+          {
+            "id": "region.656563",
+            "mapbox_id": "dXJuOm1ieHBsYzpDZ1N6",
+            "wikidata": "Q13892",
+            "short_code": "PH-TAR",
+            "text": "Tarlac"
+          },
+          {
+            "id": "country.8883",
+            "mapbox_id": "dXJuOm1ieHBsYzpJck0",
+            "wikidata": "Q928",
+            "short_code": "ph",
+            "text": "Philippines"
+          }
+        ]
+      }
+    ],
+    "school": [
+      {
+        "id": "place.8652979",
+        "type": "Feature",
+        "place_type": [
+          "place"
+        ],
+        "relevance": 0.683333,
+        "properties": {
+          "mapbox_id": "dXJuOm1ieHBsYzpoQWl6",
+          "wikidata": "Q56457"
+        },
+        "text": "Paniqui",
+        "place_name": "Paniqui, Tarlac, Philippines",
+        "bbox": [
+          120.469048,
+          15.62498,
+          120.617943,
+          15.72137
+        ],
+        "center": [
+          120.57797,
+          15.668462
+        ],
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            120.57797,
+            15.668462
+          ]
+        },
+        "context": [
+          {
+            "id": "region.656563",
+            "mapbox_id": "dXJuOm1ieHBsYzpDZ1N6",
+            "wikidata": "Q13892",
+            "short_code": "PH-TAR",
+            "text": "Tarlac"
+          },
+          {
+            "id": "country.8883",
+            "mapbox_id": "dXJuOm1ieHBsYzpJck0",
+            "wikidata": "Q928",
+            "short_code": "ph",
+            "text": "Philippines"
+          }
+        ]
+      }
+    ],
+    "hospital": [
+      {
+        "id": "place.8652979",
+        "type": "Feature",
+        "place_type": [
+          "place"
+        ],
+        "relevance": 0.683333,
+        "properties": {
+          "mapbox_id": "dXJuOm1ieHBsYzpoQWl6",
+          "wikidata": "Q56457"
+        },
+        "text": "Paniqui",
+        "place_name": "Paniqui, Tarlac, Philippines",
+        "bbox": [
+          120.469048,
+          15.62498,
+          120.617943,
+          15.72137
+        ],
+        "center": [
+          120.57797,
+          15.668462
+        ],
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            120.57797,
+            15.668462
+          ]
+        },
+        "context": [
+          {
+            "id": "region.656563",
+            "mapbox_id": "dXJuOm1ieHBsYzpDZ1N6",
+            "wikidata": "Q13892",
+            "short_code": "PH-TAR",
+            "text": "Tarlac"
+          },
+          {
+            "id": "country.8883",
+            "mapbox_id": "dXJuOm1ieHBsYzpJck0",
+            "wikidata": "Q928",
+            "short_code": "ph",
+            "text": "Philippines"
+          }
+        ]
+      }
+    ],
+    "market": [
+      {
+        "id": "place.8652979",
+        "type": "Feature",
+        "place_type": [
+          "place"
+        ],
+        "relevance": 0.683333,
+        "properties": {
+          "mapbox_id": "dXJuOm1ieHBsYzpoQWl6",
+          "wikidata": "Q56457"
+        },
+        "text": "Paniqui",
+        "place_name": "Paniqui, Tarlac, Philippines",
+        "bbox": [
+          120.469048,
+          15.62498,
+          120.617943,
+          15.72137
+        ],
+        "center": [
+          120.57797,
+          15.668462
+        ],
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            120.57797,
+            15.668462
+          ]
+        },
+        "context": [
+          {
+            "id": "region.656563",
+            "mapbox_id": "dXJuOm1ieHBsYzpDZ1N6",
+            "wikidata": "Q13892",
+            "short_code": "PH-TAR",
+            "text": "Tarlac"
+          },
+          {
+            "id": "country.8883",
+            "mapbox_id": "dXJuOm1ieHBsYzpJck0",
+            "wikidata": "Q928",
+            "short_code": "ph",
+            "text": "Philippines"
+          }
+        ]
+      }
+    ],
+    "restaurant": [
+      {
+        "id": "place.8652979",
+        "type": "Feature",
+        "place_type": [
+          "place"
+        ],
+        "relevance": 0.683333,
+        "properties": {
+          "mapbox_id": "dXJuOm1ieHBsYzpoQWl6",
+          "wikidata": "Q56457"
+        },
+        "text": "Paniqui",
+        "place_name": "Paniqui, Tarlac, Philippines",
+        "bbox": [
+          120.469048,
+          15.62498,
+          120.617943,
+          15.72137
+        ],
+        "center": [
+          120.57797,
+          15.668462
+        ],
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            120.57797,
+            15.668462
+          ]
+        },
+        "context": [
+          {
+            "id": "region.656563",
+            "mapbox_id": "dXJuOm1ieHBsYzpDZ1N6",
+            "wikidata": "Q13892",
+            "short_code": "PH-TAR",
+            "text": "Tarlac"
+          },
+          {
+            "id": "country.8883",
+            "mapbox_id": "dXJuOm1ieHBsYzpJck0",
+            "wikidata": "Q928",
+            "short_code": "ph",
+            "text": "Philippines"
+          }
+        ]
+      }
+    ],
+    "mall": [
+      {
+        "id": "place.8652979",
+        "type": "Feature",
+        "place_type": [
+          "place"
+        ],
+        "relevance": 0.683333,
+        "properties": {
+          "mapbox_id": "dXJuOm1ieHBsYzpoQWl6",
+          "wikidata": "Q56457"
+        },
+        "text": "Paniqui",
+        "place_name": "Paniqui, Tarlac, Philippines",
+        "bbox": [
+          120.469048,
+          15.62498,
+          120.617943,
+          15.72137
+        ],
+        "center": [
+          120.57797,
+          15.668462
+        ],
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            120.57797,
+            15.668462
+          ]
+        },
+        "context": [
+          {
+            "id": "region.656563",
+            "mapbox_id": "dXJuOm1ieHBsYzpDZ1N6",
+            "wikidata": "Q13892",
+            "short_code": "PH-TAR",
+            "text": "Tarlac"
+          },
+          {
+            "id": "country.8883",
+            "mapbox_id": "dXJuOm1ieHBsYzpJck0",
+            "wikidata": "Q928",
+            "short_code": "ph",
+            "text": "Philippines"
+          }
+        ]
+      }
+    ],
+    "church": [
+      {
+        "id": "place.8652979",
+        "type": "Feature",
+        "place_type": [
+          "place"
+        ],
+        "relevance": 0.683333,
+        "properties": {
+          "mapbox_id": "dXJuOm1ieHBsYzpoQWl6",
+          "wikidata": "Q56457"
+        },
+        "text": "Paniqui",
+        "place_name": "Paniqui, Tarlac, Philippines",
+        "bbox": [
+          120.469048,
+          15.62498,
+          120.617943,
+          15.72137
+        ],
+        "center": [
+          120.57797,
+          15.668462
+        ],
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            120.57797,
+            15.668462
+          ]
+        },
+        "context": [
+          {
+            "id": "region.656563",
+            "mapbox_id": "dXJuOm1ieHBsYzpDZ1N6",
+            "wikidata": "Q13892",
+            "short_code": "PH-TAR",
+            "text": "Tarlac"
+          },
+          {
+            "id": "country.8883",
+            "mapbox_id": "dXJuOm1ieHBsYzpJck0",
+            "wikidata": "Q928",
+            "short_code": "ph",
+            "text": "Philippines"
+          }
+        ]
+      }
+    ],
+    "park": [
+      {
+        "id": "place.8652979",
+        "type": "Feature",
+        "place_type": [
+          "place"
+        ],
+        "relevance": 0.683333,
+        "properties": {
+          "mapbox_id": "dXJuOm1ieHBsYzpoQWl6",
+          "wikidata": "Q56457"
+        },
+        "text": "Paniqui",
+        "place_name": "Paniqui, Tarlac, Philippines",
+        "bbox": [
+          120.469048,
+          15.62498,
+          120.617943,
+          15.72137
+        ],
+        "center": [
+          120.57797,
+          15.668462
+        ],
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            120.57797,
+            15.668462
+          ]
+        },
+        "context": [
+          {
+            "id": "region.656563",
+            "mapbox_id": "dXJuOm1ieHBsYzpDZ1N6",
+            "wikidata": "Q13892",
+            "short_code": "PH-TAR",
+            "text": "Tarlac"
+          },
+          {
+            "id": "country.8883",
+            "mapbox_id": "dXJuOm1ieHBsYzpJck0",
+            "wikidata": "Q928",
+            "short_code": "ph",
+            "text": "Philippines"
+          }
+        ]
+      }
+    ],
+    "gas station": [
+      {
+        "id": "place.8652979",
+        "type": "Feature",
+        "place_type": [
+          "place"
+        ],
+        "relevance": 0.638889,
+        "properties": {
+          "mapbox_id": "dXJuOm1ieHBsYzpoQWl6",
+          "wikidata": "Q56457"
+        },
+        "text": "Paniqui",
+        "place_name": "Paniqui, Tarlac, Philippines",
+        "bbox": [
+          120.469048,
+          15.62498,
+          120.617943,
+          15.72137
+        ],
+        "center": [
+          120.57797,
+          15.668462
+        ],
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            120.57797,
+            15.668462
+          ]
+        },
+        "context": [
+          {
+            "id": "region.656563",
+            "mapbox_id": "dXJuOm1ieHBsYzpDZ1N6",
+            "wikidata": "Q13892",
+            "short_code": "PH-TAR",
+            "text": "Tarlac"
+          },
+          {
+            "id": "country.8883",
+            "mapbox_id": "dXJuOm1ieHBsYzpJck0",
+            "wikidata": "Q928",
+            "short_code": "ph",
+            "text": "Philippines"
+          }
+        ]
+      }
+    ],
+    "bank": [
+      {
+        "id": "place.8652979",
+        "type": "Feature",
+        "place_type": [
+          "place"
+        ],
+        "relevance": 0.683333,
+        "properties": {
+          "mapbox_id": "dXJuOm1ieHBsYzpoQWl6",
+          "wikidata": "Q56457"
+        },
+        "text": "Paniqui",
+        "place_name": "Paniqui, Tarlac, Philippines",
+        "bbox": [
+          120.469048,
+          15.62498,
+          120.617943,
+          15.72137
+        ],
+        "center": [
+          120.57797,
+          15.668462
+        ],
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            120.57797,
+            15.668462
+          ]
+        },
+        "context": [
+          {
+            "id": "region.656563",
+            "mapbox_id": "dXJuOm1ieHBsYzpDZ1N6",
+            "wikidata": "Q13892",
+            "short_code": "PH-TAR",
+            "text": "Tarlac"
+          },
+          {
+            "id": "country.8883",
+            "mapbox_id": "dXJuOm1ieHBsYzpJck0",
+            "wikidata": "Q928",
+            "short_code": "ph",
+            "text": "Philippines"
+          }
+        ]
+      }
+    ],
+    "pharmacy": [
+      {
+        "id": "place.8652979",
+        "type": "Feature",
+        "place_type": [
+          "place"
+        ],
+        "relevance": 0.683333,
+        "properties": {
+          "mapbox_id": "dXJuOm1ieHBsYzpoQWl6",
+          "wikidata": "Q56457"
+        },
+        "text": "Paniqui",
+        "place_name": "Paniqui, Tarlac, Philippines",
+        "bbox": [
+          120.469048,
+          15.62498,
+          120.617943,
+          15.72137
+        ],
+        "center": [
+          120.57797,
+          15.668462
+        ],
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            120.57797,
+            15.668462
+          ]
+        },
+        "context": [
+          {
+            "id": "region.656563",
+            "mapbox_id": "dXJuOm1ieHBsYzpDZ1N6",
+            "wikidata": "Q13892",
+            "short_code": "PH-TAR",
+            "text": "Tarlac"
+          },
+          {
+            "id": "country.8883",
+            "mapbox_id": "dXJuOm1ieHBsYzpJck0",
+            "wikidata": "Q928",
+            "short_code": "ph",
+            "text": "Philippines"
+          }
+        ]
+      }
+    ],
+    "police station": [
+      {
+        "id": "place.8652979",
+        "type": "Feature",
+        "place_type": [
+          "place"
+        ],
+        "relevance": 0.638889,
+        "properties": {
+          "mapbox_id": "dXJuOm1ieHBsYzpoQWl6",
+          "wikidata": "Q56457"
+        },
+        "text": "Paniqui",
+        "place_name": "Paniqui, Tarlac, Philippines",
+        "bbox": [
+          120.469048,
+          15.62498,
+          120.617943,
+          15.72137
+        ],
+        "center": [
+          120.57797,
+          15.668462
+        ],
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            120.57797,
+            15.668462
+          ]
+        },
+        "context": [
+          {
+            "id": "region.656563",
+            "mapbox_id": "dXJuOm1ieHBsYzpDZ1N6",
+            "wikidata": "Q13892",
+            "short_code": "PH-TAR",
+            "text": "Tarlac"
+          },
+          {
+            "id": "country.8883",
+            "mapbox_id": "dXJuOm1ieHBsYzpJck0",
+            "wikidata": "Q928",
+            "short_code": "ph",
+            "text": "Philippines"
+          }
+        ]
+      }
+    ],
+    "government office": [
+      {
+        "id": "place.8652979",
+        "type": "Feature",
+        "place_type": [
+          "place"
+        ],
+        "relevance": 0.638889,
+        "properties": {
+          "mapbox_id": "dXJuOm1ieHBsYzpoQWl6",
+          "wikidata": "Q56457"
+        },
+        "text": "Paniqui",
+        "place_name": "Paniqui, Tarlac, Philippines",
+        "bbox": [
+          120.469048,
+          15.62498,
+          120.617943,
+          15.72137
+        ],
+        "center": [
+          120.57797,
+          15.668462
+        ],
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            120.57797,
+            15.668462
+          ]
+        },
+        "context": [
+          {
+            "id": "region.656563",
+            "mapbox_id": "dXJuOm1ieHBsYzpDZ1N6",
+            "wikidata": "Q13892",
+            "short_code": "PH-TAR",
+            "text": "Tarlac"
+          },
+          {
+            "id": "country.8883",
+            "mapbox_id": "dXJuOm1ieHBsYzpJck0",
+            "wikidata": "Q928",
+            "short_code": "ph",
+            "text": "Philippines"
+          }
+        ]
+      }
+    ],
+    "landmark": [
+      {
+        "id": "place.8652979",
+        "type": "Feature",
+        "place_type": [
+          "place"
+        ],
+        "relevance": 0.683333,
+        "properties": {
+          "mapbox_id": "dXJuOm1ieHBsYzpoQWl6",
+          "wikidata": "Q56457"
+        },
+        "text": "Paniqui",
+        "place_name": "Paniqui, Tarlac, Philippines",
+        "bbox": [
+          120.469048,
+          15.62498,
+          120.617943,
+          15.72137
+        ],
+        "center": [
+          120.57797,
+          15.668462
+        ],
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            120.57797,
+            15.668462
+          ]
+        },
+        "context": [
+          {
+            "id": "region.656563",
+            "mapbox_id": "dXJuOm1ieHBsYzpDZ1N6",
+            "wikidata": "Q13892",
+            "short_code": "PH-TAR",
+            "text": "Tarlac"
+          },
+          {
+            "id": "country.8883",
+            "mapbox_id": "dXJuOm1ieHBsYzpJck0",
+            "wikidata": "Q928",
+            "short_code": "ph",
+            "text": "Philippines"
+          }
+        ]
+      }
+    ]
+  },
+  "metadata": {
+    "center": {
+      "latitude": 15.6661,
+      "longitude": 120.5586
+    },
+    "bounds": {
+      "southwest": {
+        "latitude": 15.6161,
+        "longitude": 120.5086
+      },
+      "northeast": {
+        "latitude": 15.7161,
+        "longitude": 120.6086
+      }
+    },
+    "timestamp": "2025-02-26T00:29:26Z",
+    "totalPlaces": 15
+  }
+}

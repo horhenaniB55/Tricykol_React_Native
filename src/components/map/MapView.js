@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, Text } from 'react-native';
-import Mapbox from '@rnmapbox/maps';
+import { StyleSheet, View, Text, Alert } from 'react-native';
+import MapView, { PROVIDER_GOOGLE, Marker, Callout } from 'react-native-maps';
 import { COLORS } from '../../constants';
+import useLocationStore from '../../store/locationStore';
 
 /**
- * Map view component using Mapbox
+ * Map view component using Google Maps
  * 
  * @param {Object} props - Component props
  * @param {Object} [props.initialRegion] - Initial map region
@@ -14,7 +15,7 @@ import { COLORS } from '../../constants';
  * @param {Object} [props.style] - Additional container style
  * @returns {React.ReactElement} MapView component
  */
-export const MapView = ({
+export const CustomMapView = ({
   initialRegion = {
     latitude: 15.6661,  // Paniqui coordinates
     longitude: 120.5586,
@@ -26,80 +27,90 @@ export const MapView = ({
   style,
 }) => {
   const [isMapReady, setIsMapReady] = useState(false);
-  const [currentLocation, setCurrentLocation] = useState(null);
+  const { 
+    currentLocation, 
+    locationError, 
+    startLocationTracking, 
+    stopLocationTracking,
+    clearLocationError 
+  } = useLocationStore();
 
-  // Get current location on mount
+  // Handle location errors
   useEffect(() => {
-    const getLocation = async () => {
-      try {
-        const location = await Mapbox.locationManager.getLastKnownLocation();
-        
-        if (location) {
-          setCurrentLocation({
-            latitude: location.coords.latitude,
-            longitude: location.coords.longitude,
-          });
-        }
-      } catch (error) {
-        console.error('Error getting location:', error);
-      }
-    };
+    if (locationError) {
+      Alert.alert(
+        'Location Error',
+        locationError,
+        [
+          { 
+            text: 'Retry', 
+            onPress: () => {
+              clearLocationError();
+              startLocationTracking();
+            }
+          },
+          { 
+            text: 'OK',
+            style: 'cancel'
+          }
+        ]
+      );
+    }
+  }, [locationError]);
 
-    getLocation();
+  // Set up location tracking
+  useEffect(() => {
+    startLocationTracking();
+    return () => stopLocationTracking();
   }, []);
-
-  // Handle map load
-  const handleMapReady = () => {
-    setIsMapReady(true);
-  };
 
   return (
     <View style={[styles.container, style]}>
-      <Mapbox.MapView
+      <MapView
+        provider={PROVIDER_GOOGLE}
         style={styles.map}
-        styleURL={Mapbox.StyleURL.Street}
-        onDidFinishLoadingMap={handleMapReady}
-        onRegionDidChange={onRegionChange}
+        initialRegion={{
+          latitude: currentLocation?.latitude || initialRegion.latitude,
+          longitude: currentLocation?.longitude || initialRegion.longitude,
+          latitudeDelta: 0.01, // Corresponds roughly to zoomLevel 14
+          longitudeDelta: 0.01,
+        }}
+        onRegionChange={onRegionChange}
         onPress={onPress}
-        compassEnabled
-        zoomEnabled
-        rotateEnabled
+        showsUserLocation
+        showsMyLocationButton
+        showsCompass
+        loadingEnabled
+        onMapReady={() => setIsMapReady(true)}
       >
-        <Mapbox.Camera
-          zoomLevel={initialRegion.zoomLevel}
-          centerCoordinate={[
-            currentLocation?.longitude || initialRegion.longitude,
-            currentLocation?.latitude || initialRegion.latitude,
-          ]}
-          animationDuration={500}
-        />
-
-        {/* User location */}
-        <Mapbox.UserLocation
-          visible
-          showsUserHeadingIndicator
-          androidRenderMode="normal"
-        />
-
-        {/* Markers */}
         {markers.map((marker, index) => (
-          <Mapbox.PointAnnotation
+          <Marker
             key={`marker-${index}`}
-            id={`marker-${index}`}
-            coordinate={[marker.longitude, marker.latitude]}
-            title={marker.title}
+            coordinate={{
+              latitude: marker.latitude,
+              longitude: marker.longitude,
+            }}
           >
             <View style={styles.markerContainer}>
               <View style={styles.marker} />
             </View>
-            <Mapbox.Callout title={marker.title} />
-          </Mapbox.PointAnnotation>
+            <Callout>
+              <Text>{marker.title}</Text>
+            </Callout>
+          </Marker>
         ))}
-      </Mapbox.MapView>
+      </MapView>
 
-      {!isMapReady && (
+      {(!isMapReady || locationError) && (
         <View style={styles.loadingContainer}>
-          <Text style={styles.loadingText}>Loading map...</Text>
+          <Text style={styles.loadingText}>
+            {locationError || 'Loading map...'}
+          </Text>
+          {locationError && (
+            <Text style={styles.errorText}>
+              Please check your location settings and try again.
+            </Text>
+          )}
         </View>
       )}
     </View>
@@ -107,6 +118,12 @@ export const MapView = ({
 };
 
 const styles = StyleSheet.create({
+  errorText: {
+    fontSize: 14,
+    color: COLORS.ERROR,
+    textAlign: 'center',
+    marginTop: 8,
+  },
   container: {
     flex: 1,
     overflow: 'hidden',
