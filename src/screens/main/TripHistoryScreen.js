@@ -69,14 +69,14 @@ export const TripHistoryScreen = () => {
 
       <View style={styles.locationContainer}>
         <View style={styles.locationRow}>
-          <MaterialIcons name="location-on" size={20} color={COLORS.PRIMARY} />
+          <MaterialIcons name="radio-button-off" size={20} color={COLORS.PRIMARY} />
           <Text style={styles.locationText} numberOfLines={1}>
             {item.pickupLocation?.address || 'Unknown pickup location'}
           </Text>
         </View>
         <View style={styles.locationDivider} />
         <View style={styles.locationRow}>
-          <MaterialIcons name="location-on" size={20} color={COLORS.ERROR} />
+          <MaterialIcons name="radio-button-on" size={20} color={COLORS.PRIMARY} />
           <Text style={styles.locationText} numberOfLines={1}>
             {item.dropoffLocation?.address || 'Unknown dropoff location'}
           </Text>
@@ -196,7 +196,7 @@ const styles = StyleSheet.create({
   locationDivider: {
     height: 16,
     width: 1,
-    backgroundColor: COLORS.GRAY_LIGHT,
+    backgroundColor: COLORS.GRAY,
     marginLeft: 10,
   },
   tripDetails: {
