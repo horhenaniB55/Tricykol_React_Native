@@ -152,6 +152,13 @@ export const MainTabNavigator = () => {
           tabBarInactiveTintColor: COLORS.GRAY,
           lazy: true,
           lazyPlaceholder: LoadingScreen,
+          tabBarButton: (props) => (
+            <TouchableOpacity
+              {...props}
+              activeOpacity={1} // Disables the opacity effect
+              style={props.style}
+            />
+          ),
           tabBarIcon: ({ focused, color, size }) => {
             if (route.name === SCREENS.BOOKINGS) {
               return (
