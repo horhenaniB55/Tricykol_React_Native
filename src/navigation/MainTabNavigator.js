@@ -136,19 +136,20 @@ export const MainTabNavigator = () => {
         screenOptions={({ route }) => ({
           headerShown: false,
           tabBarStyle: {
-            backgroundColor: COLORS.BACKGROUND,
+            backgroundColor: COLORS.DARK_PRIMARY,
             borderTopWidth: 1,
             borderTopColor: COLORS.BORDER,
-            height: 72,
-            paddingBottom: 8,
-            paddingTop: 8,
+            height: 62,
+            // paddingBottom: 8,
+            // paddingTop: 8,
             ...(Platform.OS === 'android' && {
-              height: 72,
-              paddingBottom: 12
+              height: 62,
+              // paddingBottom: 12
             })
           },
-          tabBarActiveTintColor: COLORS.PRIMARY,
-          tabBarInactiveTintColor: COLORS.TEXT,
+          tabBarActiveTintColor: COLORS.WHITE,
+          tabBarActiveBackgroundColor: "#16202e",
+          tabBarInactiveTintColor: COLORS.GRAY,
           lazy: true,
           lazyPlaceholder: LoadingScreen,
           tabBarIcon: ({ focused, color, size }) => {

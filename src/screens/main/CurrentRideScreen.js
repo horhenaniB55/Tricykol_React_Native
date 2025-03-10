@@ -18,7 +18,6 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Location from 'expo-location';
-import { throttle } from 'lodash';
 import NetInfo from '@react-native-community/netinfo';
 import { check, request, PERMISSIONS, RESULTS } from 'react-native-permissions';
 import { CurrentRideDetailsSheet } from '../../components/ride/CurrentRideDetailsSheet';
@@ -2221,10 +2220,6 @@ export const CurrentRideScreen = ({ navigation }) => {
             {activeTrip && (
               <View style={styles.tripDetails}>
                 <Text style={styles.tripDetailText}>
-                  <Text style={styles.tripDetailLabel}>Passenger: </Text>
-                  {activeTrip.passengerName}
-                </Text>
-                <Text style={styles.tripDetailText}>
                   <Text style={styles.tripDetailLabel}>Estimated Fare: </Text>
                   ₱{calculateFareAndFees(currentDistance || 0).fare.toFixed(2)}
                 </Text>
@@ -2234,9 +2229,6 @@ export const CurrentRideScreen = ({ navigation }) => {
                 </Text>
               </View>
             )}
-            <Text style={styles.modalInfoText}>
-              Completing this trip will create a trip history record and delete the current booking.
-            </Text>
             <View style={styles.modalButtons}>
               <Button
                 title="Cancel"

@@ -223,7 +223,7 @@ const StatusHeader = () => {
         style={styles.notificationButton}
         onPress={() => navigation.navigate('Notifications')}
       >
-        <Icon name="notifications" size={24} color={COLORS.TEXT} />
+        <Icon name="notifications" size={24} color={COLORS.WHITE} />
         {typeof unreadCount === 'number' && unreadCount > 0 && (
           <View style={styles.badge}>
             <Text style={styles.badgeText}>
@@ -358,13 +358,14 @@ const styles = StyleSheet.create({
   container: {
     height: APPBAR_HEIGHT + STATUSBAR_HEIGHT,
     paddingTop: STATUSBAR_HEIGHT,
-    backgroundColor: COLORS.WHITE,
+    backgroundColor: COLORS.DARK_PRIMARY,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 4,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.GRAY_LIGHT,
+    color: COLORS.WHITE
   },
   leftSection: {
     flex: 1,
@@ -381,7 +382,7 @@ const styles = StyleSheet.create({
   },
   locationText: {
     fontSize: 14,
-    color: COLORS.TEXT,
+    color: COLORS.WHITE,
     fontWeight: '600',
   },
   statusButton: {
@@ -427,11 +428,11 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: COLORS.TEXT,
+    color: COLORS.WHITE,
   },
   subtitle: {
     fontSize: 14,
-    color: COLORS.TEXT_SECONDARY,
+    color: COLORS.WHITE,
   },
   actionButton: {
     padding: 10,
@@ -439,13 +440,15 @@ const styles = StyleSheet.create({
   header: {
     height: APPBAR_HEIGHT + STATUSBAR_HEIGHT,
     paddingTop: STATUSBAR_HEIGHT,
-    backgroundColor: COLORS.WHITE,
+    backgroundColor: COLORS.DARK_PRIMARY,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 4,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.GRAY_LIGHT,
+    color: COLORS.WHITE
+
   },
   backButton: {
     padding: 10,

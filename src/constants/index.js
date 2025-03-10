@@ -31,8 +31,9 @@ export const SCREENS = {
  * Colors used throughout the app
  */
 export const COLORS = {
-  PRIMARY: '#00BCD4',
+  // PRIMARY: '#00BCD4',
   DARK_PRIMARY: '#263E61',
+  PRIMARY: '#263E61',
   SECONDARY: '#0097A7',
   ACCENT: '#FFC107',
   BACKGROUND: '#F5F5F5',
