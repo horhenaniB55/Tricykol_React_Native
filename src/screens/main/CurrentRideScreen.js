@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef, useCallback, useMemo, memo } from 'react';
+import { throttle } from 'lodash';
 import { View, StyleSheet, Platform, Alert, Text, ActivityIndicator, AppState, Linking, TouchableOpacity, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import MapView, { Marker, Polyline } from 'react-native-maps';
@@ -354,125 +355,74 @@ export const CurrentRideScreen = ({ navigation }) => {
     }
   }, []);
   
-  // Update effect that calculates currentDistance to use the toast handler
+  // Optimized distance calculation effect
   useEffect(() => {
-    // Skip updates if no active trip
-    if (!activeTrip) return;
-    
-    // Create a function to update distance and button state
-    const updateDistanceAndState = () => {
+    if (!activeTrip || !currentLocation) return;
+
+    // Throttled function to update distance and UI
+    const throttledUpdate = throttle(() => {
       try {
         let distanceToDestination = 0;
+        const now = new Date();
         
-        if (activeTrip.status === 'in_progress' && currentLocation && 
-            safeCoordinate(activeTrip.dropoffLocation?.coordinates)) {
-          // Calculate distance directly
-          const distanceResult = LocationModel.calculateDistanceAndTime(
-            currentLocation, 
+        if (activeTrip.status === 'in_progress') {
+          const result = LocationModel.calculateDistanceAndTime(
+            currentLocation,
             activeTrip.dropoffLocation.coordinates
           );
-          
-          distanceToDestination = distanceResult.distance;
-          
-          // Always update the UI with the latest distance calculation for real-time display
-          setCurrentDistance(distanceToDestination);
-          
-          // Update estimated arrival time
-          const now = new Date();
-          now.setSeconds(now.getSeconds() + distanceResult.estimatedTime);
-          setEstimatedArrival(now);
-          
-          // Only show toast notifications and log significant changes (5m or more)
-          const lastDistance = lastDistanceRef.current;
-          if (lastDistance === null || Math.abs(lastDistance - distanceToDestination) >= 5) {
-            console.log(`[CurrentRideScreen] Significant distance change: ${lastDistance ? Math.abs(lastDistance - distanceToDestination).toFixed(1) : 'N/A'}m`);
-            
-            // Update the reference for the next comparison
-            lastDistanceRef.current = distanceToDestination;
-            
-            // Show toast for significant distance changes
-            handleDistanceToast(distanceToDestination, false);
-          }
-          
-          // Check proximity to dropoff and update button state
-          const nearDropoffStatus = distanceToDestination <= 4;
-          
-          // Force UI update for action button when near dropoff
-          if (nearDropoffStatus !== useEffect.lastNearDropoffState) {
-            console.log(`[CurrentRideScreen] Proximity to dropoff changed: ${nearDropoffStatus ? 'Within 4m' : 'Beyond 4m'} (${distanceToDestination.toFixed(2)}m)`);
-            useEffect.lastNearDropoffState = nearDropoffStatus;
-            
-            // Show toast notification
-            handleDistanceToast(distanceToDestination, false);
-          }
-          
-          // Force re-render of action button
-          setForceUpdate(prev => !prev);
-          
-        } else if ((activeTrip.status === 'accepted' || activeTrip.status === 'on_the_way') && 
-                  currentLocation && safeCoordinate(activeTrip.pickupLocation?.coordinates)) {
-          const distanceResult = LocationModel.calculateDistanceAndTime(
-            currentLocation, 
+          distanceToDestination = result.distance;
+          setEstimatedArrival(new Date(now.getTime() + result.estimatedTime * 60000));
+        } else {
+          const result = LocationModel.calculateDistanceAndTime(
+            currentLocation,
             activeTrip.pickupLocation.coordinates
           );
-          
-          distanceToDestination = distanceResult.distance;
-          
-          // Always update the UI with the latest distance calculation for real-time display
-          setCurrentDistance(distanceToDestination);
-          
-          // Update estimated arrival time for pickup
-          const now = new Date();
-          now.setSeconds(now.getSeconds() + distanceResult.estimatedTime);
-          setEstimatedArrival(now);
-          
-          // Only show toast notifications and log significant changes (5m or more)
-          const lastDistance = lastDistanceRef.current;
-          if (lastDistance === null || Math.abs(lastDistance - distanceToDestination) >= 5) {
-            console.log(`[CurrentRideScreen] Significant pickup distance change: ${lastDistance ? Math.abs(lastDistance - distanceToDestination).toFixed(1) : 'N/A'}m`);
-            
-            // Update the reference for the next comparison
-            lastDistanceRef.current = distanceToDestination;
-            
-            // Show toast for significant distance changes
-            handleDistanceToast(distanceToDestination, true);
-          }
-          
-          // Handle distance-related toast for pickup
-          handleDistanceToast(distanceToDestination, true);
-          
-          // Force re-render of action button
-          setForceUpdate(prev => !prev);
+          distanceToDestination = result.distance;
+          setEstimatedArrival(new Date(now.getTime() + result.estimatedTime * 60000));
         }
-        
-        // Update Firestore with current location and distance (throttled)
-        if (user?.id && Date.now() - (updateDistanceAndState.lastFirestoreUpdate || 0) > 3000) {
-          firestore().collection('bookings').doc(activeTrip.id).update({
-            driverCurrentLocation: {
-              ...currentLocation,
-              updatedAt: firestore.FieldValue.serverTimestamp()
-            },
-            currentDistance: distanceToDestination,
-            updatedAt: firestore.FieldValue.serverTimestamp()
-          }).catch(error => {
-            console.error('[CurrentRideScreen] Error updating location in Firestore:', error);
-          });
-          updateDistanceAndState.lastFirestoreUpdate = Date.now();
+
+        // Only update state if distance changed significantly (>1m difference)
+        if (Math.abs(currentDistance - distanceToDestination) > 1) {
+          setCurrentDistance(distanceToDestination);
         }
       } catch (error) {
-        console.error("[CurrentRideScreen] Error updating distance calculations:", error);
+        console.error("Distance calculation error:", error);
       }
-    };
+    }, 500); // Update every 500ms instead of 200ms
 
-    // Set up interval for more frequent updates to ensure real-time display
-    const intervalId = setInterval(updateDistanceAndState, 200); // Update every 200ms for smoother real-time display
+    // Initial call
+    throttledUpdate();
     
-    // Run initial update
-    updateDistanceAndState();
-    
-    // Cleanup interval on unmount or when dependencies change
-    return () => clearInterval(intervalId);
-  }, [currentLocation, activeTrip, handleDistanceToast, user?.id]);
+    // Set up interval
+    const intervalId = setInterval(throttledUpdate, 500);
+
+    return () => {
+      clearInterval(intervalId);
+      throttledUpdate.cancel();
+    };
+  }, [currentLocation, activeTrip?.status, activeTrip?.pickupLocation, activeTrip?.dropoffLocation]);
+
+  // Separate effect for Firestore updates
+  useEffect(() => {
+    if (!user?.id || !activeTrip?.id || !currentLocation) return;
+
+    const updateFirestore = throttle(() => {
+      firestore().collection('bookings').doc(activeTrip.id).update({
+        driverCurrentLocation: {
+          ...currentLocation,
+          updatedAt: firestore.FieldValue.serverTimestamp()
+        },
+        currentDistance: currentDistance,
+        updatedAt: firestore.FieldValue.serverTimestamp()
+      }).catch(error => {
+        console.error('[CurrentRideScreen] Error updating location in Firestore:', error);
+      });
+    }, 3000); // Update Firestore every 3 seconds
+
+    updateFirestore();
+
+    return () => updateFirestore.cancel();
+  }, [currentLocation, currentDistance, activeTrip?.id, user?.id]);
 
   // Memoized helper to check if we're near the dropoff location
   const checkDropoffProximity = useCallback(() => {
@@ -2223,16 +2173,10 @@ export const CurrentRideScreen = ({ navigation }) => {
         </MapView>
 
         {/* Distance info overlay */}
-        {currentLocation && activeTrip && currentDistance !== null && (
-          <View style={styles.distanceOverlay}>
-            <Text style={styles.distanceText}>
-              {activeTrip.status !== 'in_progress' ? 'To Pickup: ' : 'To Dropoff: '}
-              {currentDistance >= 500 
-                ? `${(currentDistance / 1000).toFixed(1)} km` 
-                : `${Math.round(currentDistance)} m`}
-            </Text>
-          </View>
-        )}
+        <DistanceOverlay 
+          status={activeTrip?.status} 
+          distance={currentDistance} 
+        />
       </View>
       )}
 
@@ -2628,3 +2572,18 @@ const styles = StyleSheet.create({
   },
 });
 
+// Memoized distance overlay component
+const DistanceOverlay = memo(({ status, distance }) => {
+  if (!distance || distance <= 0) return null;
+
+  return (
+    <View style={styles.distanceOverlay}>
+      <Text style={styles.distanceText}>
+        {status !== 'in_progress' ? 'To Pickup: ' : 'To Dropoff: '}
+        {distance >= 500 
+          ? `${(distance / 1000).toFixed(1)} km` 
+          : `${Math.round(distance)} m`}
+      </Text>
+    </View>
+  );
+});
