@@ -68,109 +68,110 @@ export const MapScreen = () => {
         }
     }, [isBookingsVisible]);
 
-    // Optimize location tracking
+    // Optimized location fetching with priority order
     useEffect(() => {
-        let locationUnsubscribe = null;
         let isMounted = true;
-        
-        const setupLocationTracking = async () => {
+        const fetchLocation = async () => {
             if (!driver?.id) {
-                console.log('[MapScreen] No driver ID available');
                 if (isMounted) setIsLocationLoading(false);
                 return;
             }
-            
-            // Don't set loading to true if we already have a location
-            if (!currentLocation && isMounted) {
-                setIsLocationLoading(true);
-            }
-            
+
             try {
-                // First try to get location from AsyncStorage
-                const storedLocationString = await AsyncStorage.getItem('last_known_location');
-                if (storedLocationString && isMounted) {
-                    try {
-                        const storedLocation = JSON.parse(storedLocationString);
-                        if (storedLocation && storedLocation.latitude && storedLocation.longitude) {
-                            console.log('[MapScreen] Using location from AsyncStorage');
-                            // Update the location store
-                            useLocationStore.setState({ currentLocation: storedLocation });
-                            // Update the map region
-                            setRegion({
-                                ...storedLocation,
-                                latitudeDelta: 0.02,
-                                longitudeDelta: 0.02,
-                            });
-                            setIsLocationLoading(false);
-                        }
-                    } catch (error) {
-                        console.error('[MapScreen] Error parsing stored location:', error);
+                // 1. Try Expo Location first
+                console.log('[MapScreen] Attempting to get current location via Expo');
+                const { status } = await Location.requestForegroundPermissionsAsync();
+                if (status === 'granted') {
+                    const location = await Location.getCurrentPositionAsync({
+                        accuracy: Location.Accuracy.High,
+                        timeout: 10000
+                    });
+                    
+                    if (location?.coords && isMounted) {
+                        console.log('[MapScreen] Using Expo location');
+                        const newLocation = {
+                            latitude: location.coords.latitude,
+                            longitude: location.coords.longitude,
+                            timestamp: Date.now()
+                        };
+                        
+                        await AsyncStorage.setItem('last_known_location', JSON.stringify(newLocation));
+                        useLocationStore.setState({ currentLocation: newLocation });
+                        setRegion({
+                            ...newLocation,
+                            latitudeDelta: 0.02,
+                            longitudeDelta: 0.02
+                        });
+                        setIsLocationLoading(false);
+                        return;
                     }
                 }
+            } catch (expoError) {
+                console.log('[MapScreen] Expo location failed:', expoError);
+            }
 
-                // Set up Firestore listener for location updates (with performance optimizations)
-                locationUnsubscribe = firestore()
+            try {
+                // 2. Fallback to AsyncStorage
+                console.log('[MapScreen] Trying AsyncStorage fallback');
+                const storedLocation = await AsyncStorage.getItem('last_known_location');
+                if (storedLocation && isMounted) {
+                    const parsedLocation = JSON.parse(storedLocation);
+                    if (parsedLocation?.latitude && parsedLocation?.longitude) {
+                        console.log('[MapScreen] Using AsyncStorage location');
+                        useLocationStore.setState({ currentLocation: parsedLocation });
+                        setRegion({
+                            ...parsedLocation,
+                            latitudeDelta: 0.02,
+                            longitudeDelta: 0.02
+                        });
+                        setIsLocationLoading(false);
+                        return;
+                    }
+                }
+            } catch (storageError) {
+                console.log('[MapScreen] AsyncStorage fallback failed:', storageError);
+            }
+
+            try {
+                // 3. Final fallback to Firestore
+                console.log('[MapScreen] Trying Firestore fallback');
+                const doc = await firestore()
                     .collection('drivers')
                     .doc(driver.id)
-                    .onSnapshot(
-                        async (docSnapshot) => {
-                            if (!isMounted) return;
-                            
-                            if (docSnapshot.exists) {
-                                const driverData = docSnapshot.data();
-                                if (driverData.currentLocation && 
-                                    driverData.currentLocation.latitude && 
-                                    driverData.currentLocation.longitude) {
-                                    
-                                    const firestoreLocation = {
-                                        latitude: driverData.currentLocation.latitude,
-                                        longitude: driverData.currentLocation.longitude,
-                                        timestamp: driverData.currentLocation.updatedAt?.toDate()?.getTime() || Date.now()
-                                    };
+                    .get();
 
-                                    // Only update if we don't have a more recent location in AsyncStorage
-                                    const storedLocationString = await AsyncStorage.getItem('last_known_location');
-                                    if (storedLocationString) {
-                                        const storedLocation = JSON.parse(storedLocationString);
-                                        if (storedLocation && storedLocation.timestamp && 
-                                            storedLocation.timestamp > firestoreLocation.timestamp) {
-                                            console.log('[MapScreen] AsyncStorage location is more recent');
-                                            return;
-                                        }
-                                    }
-                                    
-                                    console.log('[MapScreen] Using location from Firestore');
-                                    // Update AsyncStorage with Firestore location
-                                    await AsyncStorage.setItem('last_known_location', JSON.stringify(firestoreLocation));
-                                    // Update the location store
-                                    useLocationStore.setState({ currentLocation: firestoreLocation });
-                                    // Update the map region - moved to separate useEffect for better performance
-                                }
-                            }
-                            if (isMounted) setIsLocationLoading(false);
-                        },
-                        (error) => {
-                            console.error('[MapScreen] Error in Firestore location listener:', error);
-                            if (isMounted) setIsLocationLoading(false);
-                        }
-                    );
-            } catch (error) {
-                console.error('[MapScreen] Error setting up location tracking:', error);
-                if (isMounted) setIsLocationLoading(false);
+                if (doc.exists && isMounted) {
+                    const firestoreLocation = doc.data()?.currentLocation;
+                    if (firestoreLocation?.latitude && firestoreLocation?.longitude) {
+                        console.log('[MapScreen] Using Firestore location');
+                        const locationData = {
+                            latitude: firestoreLocation.latitude,
+                            longitude: firestoreLocation.longitude,
+                            timestamp: Date.now()
+                        };
+                        
+                        await AsyncStorage.setItem('last_known_location', JSON.stringify(locationData));
+                        useLocationStore.setState({ currentLocation: locationData });
+                        setRegion({
+                            ...locationData,
+                            latitudeDelta: 0.02,
+                            longitudeDelta: 0.02
+                        });
+                    }
+                }
+            } catch (firestoreError) {
+                console.log('[MapScreen] Firestore fallback failed:', firestoreError);
             }
+
+            if (isMounted) setIsLocationLoading(false);
         };
-        
-        setupLocationTracking();
-        
-        // Clean up listener and mounted flag when component unmounts
+
+        fetchLocation();
+
         return () => {
             isMounted = false;
-            if (locationUnsubscribe) {
-                console.log('[MapScreen] Cleaning up Firestore location listener');
-                locationUnsubscribe();
-            }
         };
-    }, [driver?.id]); // Only re-run if driver ID changes
+    }, [driver?.id]); // Only trigger when driver ID changes
 
     // Memoize and debounce map animation to reduce lag
     const lastAnimationTime = useRef(0);
