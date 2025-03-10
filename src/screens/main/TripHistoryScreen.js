@@ -93,8 +93,8 @@ export const TripHistoryScreen = () => {
           <Text style={[styles.detailValue, styles.earningValue]}>{formatCurrency(driverEarning)}</Text>
         </View>
         <View style={styles.detailItem}>
-          <Text style={styles.detailLabel}>Passenger</Text>
-          <Text style={styles.detailValue}>{item.passengerName}</Text>
+          <Text style={styles.detailLabel}>Passenger/s</Text>
+          <Text style={styles.detailValue}>{item.passengerCount}</Text>
         </View>
       </View>
     </View>

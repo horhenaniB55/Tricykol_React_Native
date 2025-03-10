@@ -1882,6 +1882,7 @@ export const CurrentRideScreen = ({ navigation }) => {
       const tripHistoryData = {
         passengerId: activeTrip.passengerId,
         passengerName: activeTrip.passengerName || 'Passenger',
+        passengerCount: activeTrip.passengerCount || 1,
         passengerPhone: activeTrip.passengerPhone || 'N/A',
         driverId: driverId,
         driverName: driverName,
@@ -2493,6 +2494,7 @@ const styles = StyleSheet.create({
   },
   tripDetailLabel: {
     fontWeight: '600',
+    color: COLORS.TEXT
   },
   modalInfoText: {
     color: COLORS.TEXT_SECONDARY,
@@ -2566,10 +2568,6 @@ const styles = StyleSheet.create({
     borderRadius: 60,
     backgroundColor: 'rgba(39, 174, 96, 0.1)',
     justifyContent: 'center',
-  },
-  earningsValue: {
-    color: COLORS.SUCCESS,
-    fontWeight: '600',
   },
 });
 
