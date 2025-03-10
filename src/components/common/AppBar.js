@@ -318,7 +318,7 @@ export const AppBar = ({
           onPress={handleBack}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
-          <Icon name="arrow-back" size={24} color={COLORS.TEXT} />
+          <Icon name="arrow-back" size={24} color={COLORS.WHITE} />
         </TouchableOpacity>
       );
     }
