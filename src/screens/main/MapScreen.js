@@ -10,6 +10,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import firestore from '@react-native-firebase/firestore';
 import useMapStore from '../../store/mapStore';
+import { locationService } from '../../services/locationService';
 
 export const MapScreen = () => {
     const mapRef = useRef(null);
@@ -263,15 +264,50 @@ export const MapScreen = () => {
     }).current;
 
     // Memoize center location handler
-    const handleCenterLocation = useRef(() => {
-        if (mapRef.current && currentLocation) {
-            mapRef.current.animateToRegion({
-                latitude: currentLocation.latitude,
-                longitude: currentLocation.longitude,
-                latitudeDelta: 0.02,
-                longitudeDelta: 0.02,
-            });
+    const handleCenterLocation = useRef(async () => {
+      try {
+        setIsLocationLoading(true);
+        
+        // Get the most recent location from all possible sources
+        const latestLocation = await locationService.getLastKnownLocation();
+        
+        if (!latestLocation) {
+          console.log('No location available');
+          setIsLocationLoading(false);
+          return;
         }
+
+        // Update local state and storage
+        const newLocation = {
+          latitude: latestLocation.latitude,
+          longitude: latestLocation.longitude,
+          timestamp: Date.now()
+        };
+        
+        await AsyncStorage.setItem('last_known_location', JSON.stringify(newLocation));
+        useLocationStore.setState({ currentLocation: newLocation });
+
+        // Force immediate map update
+        if (mapRef.current) {
+          mapRef.current.animateToRegion({
+            latitude: newLocation.latitude,
+            longitude: newLocation.longitude,
+            latitudeDelta: 0.02,
+            longitudeDelta: 0.02,
+          }, 350); // Faster animation for manual interaction
+          
+          // Update region state immediately
+          setRegion({
+            ...newLocation,
+            latitudeDelta: 0.02,
+            longitudeDelta: 0.02
+          });
+        }
+      } catch (error) {
+        console.error('Error centering location:', error);
+      } finally {
+        setIsLocationLoading(false);
+      }
     }).current;
     
     // Cleanup all listeners and timers on component unmount
@@ -293,8 +329,13 @@ export const MapScreen = () => {
                     <TouchableOpacity 
                         style={styles.myLocationButton}
                         onPress={handleCenterLocation}
+                        activeOpacity={0.7} // Add visual feedback
                     >
-                        <MaterialIcons name="my-location" size={24} color={COLORS.PRIMARY} />
+                        <MaterialIcons 
+                            name="my-location" 
+                            size={24} 
+                            color={isLocationLoading ? COLORS.GRAY : COLORS.PRIMARY} 
+                        />
                     </TouchableOpacity>
                 </View>
                 <MapView
