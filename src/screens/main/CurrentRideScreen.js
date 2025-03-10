@@ -1329,14 +1329,12 @@ export const CurrentRideScreen = ({ navigation }) => {
           disabled: false
         };
       case 'on_the_way': {
-        // Check if we're within close proximity to avoid validation delay when clearly far away
         const isWithinRoughProximity = currentLocation && activeTrip.pickupLocation?.coordinates &&
           LocationModel.calculateDistanceAndTime(currentLocation, activeTrip.pickupLocation.coordinates).distance <= 100;
           
         return {
           title: 'ARRIVED AT PICKUP',
           onPress: async () => {
-            // Quick pre-validation for better UX - avoid full validation if clearly far away
             if (currentLocation && activeTrip.pickupLocation?.coordinates) {
               const quickDistance = LocationModel.calculateDistanceAndTime(
                 currentLocation, 
