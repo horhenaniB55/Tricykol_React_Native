@@ -1,4 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
+import { throttle } from 'lodash';
 import { View, StyleSheet, ActivityIndicator, Text, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import MapView, { Marker, PROVIDER_GOOGLE, Callout } from 'react-native-maps';
@@ -263,60 +264,62 @@ export const MapScreen = () => {
         }
     }).current;
 
-    // Memoize center location handler
-    const handleCenterLocation = useRef(async () => {
+    // Optimized center location handler with throttling and cleanup
+    const handleCenterLocation = useCallback(async () => {
       try {
-        setIsLocationLoading(true);
+        if (isLocationLoading) return; // Prevent multiple simultaneous requests
         
-        // Get the most recent location from all possible sources
+        setIsLocationLoading(true);
+        console.log('[MapScreen] Manual location refresh initiated');
+        
+        // Get fresh location with priority: GPS → Storage → Firestore
         const latestLocation = await locationService.getLastKnownLocation();
         
         if (!latestLocation) {
-          console.log('No location available');
+          console.log('[MapScreen] No location available for centering');
           setIsLocationLoading(false);
           return;
         }
 
-        // Update local state and storage
-        const newLocation = {
-          latitude: latestLocation.latitude,
-          longitude: latestLocation.longitude,
-          timestamp: Date.now()
-        };
-        
-        await AsyncStorage.setItem('last_known_location', JSON.stringify(newLocation));
-        useLocationStore.setState({ currentLocation: newLocation });
-
-        // Force immediate map update
+        // Optimized update sequence
         if (mapRef.current) {
+          // Direct map animation without state updates
           mapRef.current.animateToRegion({
-            latitude: newLocation.latitude,
-            longitude: newLocation.longitude,
+            latitude: latestLocation.latitude,
+            longitude: latestLocation.longitude,
             latitudeDelta: 0.02,
             longitudeDelta: 0.02,
-          }, 350); // Faster animation for manual interaction
-          
-          // Update region state immediately
-          setRegion({
-            ...newLocation,
-            latitudeDelta: 0.02,
-            longitudeDelta: 0.02
-          });
+          }, 350);
         }
+
+        // Debounced storage update
+        const updateStorage = throttle(async (location) => {
+          await AsyncStorage.setItem('last_known_location', JSON.stringify(location));
+          useLocationStore.setState({ currentLocation: location });
+        }, 1000);
+
+        updateStorage({
+          ...latestLocation,
+          timestamp: Date.now()
+        });
+
       } catch (error) {
-        console.error('Error centering location:', error);
+        console.error('[MapScreen] Location centering error:', error);
       } finally {
-        setIsLocationLoading(false);
+        // Ensure loading state clears even if component unmounts
+        requestAnimationFrame(() => setIsLocationLoading(false));
       }
-    }).current;
+    }, [isLocationLoading]); // Only dependency is loading state
     
-    // Cleanup all listeners and timers on component unmount
+    // Cleanup all listeners, timers and throttled operations
     useEffect(() => {
         return () => {
             cleanupMapStore();
             if (animationTimeoutRef.current) {
                 clearTimeout(animationTimeoutRef.current);
             }
+            // Cancel any pending storage updates
+            updateStorage?.cancel();
         };
     }, []);
 
