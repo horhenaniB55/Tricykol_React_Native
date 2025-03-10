@@ -176,7 +176,7 @@ const styles = StyleSheet.create({
   },
   tripAmount: {
     fontSize: 16,
-    color: COLORS.SUCCESS,
+    color: COLORS.PRIMARY,
     fontWeight: '600',
   },
   locationContainer: {
