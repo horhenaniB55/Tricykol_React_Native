@@ -2227,6 +2227,11 @@ export const CurrentRideScreen = ({ navigation }) => {
                   <Text style={styles.tripDetailLabel}>System Fee: </Text>
                   ₱{calculateFareAndFees(currentDistance || 0).systemFee.toFixed(2)}
                 </Text>
+                {/* Add this new earnings row */}
+                <Text style={[styles.tripDetailText, styles.earningsValue]}>
+                  <Text style={styles.tripDetailLabel}>Your Earnings: </Text>
+                  ₱{(calculateFareAndFees(currentDistance || 0).fare - calculateFareAndFees(currentDistance || 0).systemFee).toFixed(2)}
+                </Text>
               </View>
             )}
             <View style={styles.modalButtons}>
@@ -2404,6 +2409,10 @@ const styles = StyleSheet.create({
   },
   completeButton: {
     backgroundColor: COLORS.SUCCESS
+  },
+  earningsValue: {
+    color: COLORS.SUCCESS,
+    fontWeight: '600',
   },
   distanceWarning: {
     color: COLORS.WARNING,
