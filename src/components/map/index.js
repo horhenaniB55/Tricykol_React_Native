@@ -1,1 +1,1 @@
-export { CustomMapView as MapView } from './MapView';
+export { MapView } from './MapView';

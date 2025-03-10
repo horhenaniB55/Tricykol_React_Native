@@ -1,4 +1,4 @@
-React native with Expo, JavaScript, Classic routing/router, Firebase(React native firebase sdk), Zustand, Google Maps
+React native with Expo, JavaScript, Classic routing/router, Firebase(React native firebase sdk), Zustand, Async storage, Google Maps
 
 Models:
 

@@ -2,17 +2,17 @@ import 'dotenv/config';
 
 export default {
   expo: {
-    name: "Tricykol_Driver",
-    slug: "Tricykol_Driver",
+    name: "Tricykol Driver",
+    slug: "Tricykol Driver",
     version: "1.0.0",
     orientation: "portrait",
     icon: "./assets/icon.png",
     userInterfaceStyle: "light",
     newArchEnabled: true,
     splash: {
-      image: "./assets/splash-icon.png",
+      image: "./assets/tricykol_driver.png",
       resizeMode: "contain",
-      backgroundColor: "#ffffff"
+      backgroundColor: "#263E61"
     },
     ios: {
       supportsTablet: true,
@@ -47,7 +47,7 @@ export default {
       package: "com.tricykol.driver",
       adaptiveIcon: {
         foregroundImage: "./assets/adaptive-icon.png",
-        backgroundColor: "#ffffff"
+        backgroundColor: "#263E61"
       }
     },
     plugins: [
@@ -60,13 +60,24 @@ export default {
         }
       ],
       [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#263E61",
+          "image": "./assets/tricykol_driver.png",
+          "imageWidth": 200
+        }
+      ],
+      [
         "expo-location",
         {
-          locationAlwaysAndWhenInUsePermission: "Allow Tricykol Driver to use your location.",
-          locationWhenInUsePermission: "Allow Tricykol Driver to use your location.",
+          locationAlwaysAndWhenInUsePermission: "Tricykol Driver needs your location to show your position on the map and process bookings even when the app is in background.",
+          locationWhenInUsePermission: "Tricykol Driver needs your location to show your position on the map and process bookings.",
           isIosBackgroundLocationEnabled: true,
           isAndroidBackgroundLocationEnabled: true,
-          enableBackgroundLocationUpdates: false
+          enableBackgroundLocationUpdates: true,
+          android: {
+            backgroundPermissionRationale: "Tricykol Driver needs 'Allow all the time' permission to track your location for bookings even when the app is closed."
+          }
         }
       ]
     ],

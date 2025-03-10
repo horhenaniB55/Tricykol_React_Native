@@ -104,14 +104,18 @@ export const OtpVerificationScreen = ({ navigation, route }) => {
 
       setIsLoading(true);
       
-      // Verify OTP
-      const result = await AuthService.verifyOtp(phoneNumber, otpCode);
+      console.log('Verifying OTP code:', otpCode, 'for phone number:', phoneNumber);
+      
+      // Use the store's verifyOtp method with the phone number from route params
+      const result = await useAuthStore.getState().verifyOtp(otpCode, false);
       
       if (result.success) {
-        // Authentication will be handled by the auth state listener in App.js
-        console.log('OTP verified successfully');
+        // Authentication will be handled by the auth state listener in the navigation
+        console.log('OTP verified successfully, result:', result);
+        // No need to navigate - the RootNavigator will handle this based on auth state
       } else {
-        setError('Failed to verify OTP. Please try again.');
+        console.error('OTP verification failed:', result.error);
+        setError(result.error || 'Failed to verify OTP. Please try again.');
       }
     } catch (error) {
       console.error('OTP verification error:', error);
@@ -213,7 +217,7 @@ export const OtpVerificationScreen = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: COLORS.BLACK,
+    backgroundColor: "#263E61",
   },
   container: {
     flex: 1,
@@ -235,7 +239,7 @@ const styles = StyleSheet.create({
   },
   subHeaderText: {
     fontSize: 16,
-    color: COLORS.GRAY,
+    color: COLORS.GRAY_LIGHT,
     textAlign: 'center',
   },
   otpContainer: {

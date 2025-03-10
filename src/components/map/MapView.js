@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, Text, Alert } from 'react-native';
-import MapView, { PROVIDER_GOOGLE, Marker, Callout } from 'react-native-maps';
+import React, { useEffect, useState, forwardRef } from 'react';
+import { StyleSheet, View, Text } from 'react-native';
+import RNMapView, { PROVIDER_GOOGLE, Marker, Callout, Polyline } from 'react-native-maps';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 import { COLORS } from '../../constants';
 import useLocationStore from '../../store/locationStore';
 
@@ -10,22 +11,43 @@ import useLocationStore from '../../store/locationStore';
  * @param {Object} props - Component props
  * @param {Object} [props.initialRegion] - Initial map region
  * @param {Array} [props.markers] - Array of markers to display
+ * @param {Array} [props.polylines] - Array of polylines to display
  * @param {Function} [props.onRegionChange] - Callback when map region changes
  * @param {Function} [props.onPress] - Callback when map is pressed
  * @param {Object} [props.style] - Additional container style
+ * @param {number} [props.minZoomLevel] - Minimum zoom level
+ * @param {number} [props.maxZoomLevel] - Maximum zoom level
+ * @param {Function} [props.onMapReady] - Callback when map is ready
+ * @param {boolean} [props.zoomEnabled] - Whether to enable zoom gestures
+ * @param {boolean} [props.scrollEnabled] - Whether to enable scroll gestures
+ * @param {boolean} [props.pitchEnabled] - Whether to enable pitch gestures
+ * @param {boolean} [props.rotateEnabled] - Whether to enable rotate gestures
+ * @param {boolean} [props.moveOnMarkerPress] - Whether to move to marker on press
+ * @param {boolean} [props.liteMode] - Whether to use lite mode for static maps
  * @returns {React.ReactElement} MapView component
  */
-export const CustomMapView = ({
+export const MapView = forwardRef(({
   initialRegion = {
     latitude: 15.6661,  // Paniqui coordinates
     longitude: 120.5586,
-    zoomLevel: 14,
+    latitudeDelta: 0.02,
+    longitudeDelta: 0.02,
   },
   markers = [],
+  polylines = [],
   onRegionChange,
   onPress,
   style,
-}) => {
+  minZoomLevel = 12,
+  maxZoomLevel = 20,
+  onMapReady,
+  zoomEnabled = true,
+  scrollEnabled = true,
+  pitchEnabled = true,
+  rotateEnabled = true,
+  moveOnMarkerPress = true,
+  liteMode = false,
+}, ref) => {
   const [isMapReady, setIsMapReady] = useState(false);
   const { 
     currentLocation, 
@@ -35,53 +57,46 @@ export const CustomMapView = ({
     clearLocationError 
   } = useLocationStore();
 
-  // Handle location errors
-  useEffect(() => {
-    if (locationError) {
-      Alert.alert(
-        'Location Error',
-        locationError,
-        [
-          { 
-            text: 'Retry', 
-            onPress: () => {
-              clearLocationError();
-              startLocationTracking();
-            }
-          },
-          { 
-            text: 'OK',
-            style: 'cancel'
-          }
-        ]
-      );
-    }
-  }, [locationError]);
-
   // Set up location tracking
   useEffect(() => {
     startLocationTracking();
     return () => stopLocationTracking();
   }, []);
 
+  const handleMapReady = () => {
+    setIsMapReady(true);
+    if (onMapReady) {
+      onMapReady();
+    }
+  };
+
   return (
     <View style={[styles.container, style]}>
-      <MapView
+      <RNMapView
+        ref={ref}
         provider={PROVIDER_GOOGLE}
         style={styles.map}
         initialRegion={{
           latitude: currentLocation?.latitude || initialRegion.latitude,
           longitude: currentLocation?.longitude || initialRegion.longitude,
-          latitudeDelta: 0.01, // Corresponds roughly to zoomLevel 14
-          longitudeDelta: 0.01,
+          latitudeDelta: initialRegion.latitudeDelta,
+          longitudeDelta: initialRegion.longitudeDelta,
         }}
         onRegionChange={onRegionChange}
         onPress={onPress}
         showsUserLocation
-        showsMyLocationButton
-        showsCompass
+        showsMyLocationButton={scrollEnabled}
+        showsCompass={rotateEnabled}
         loadingEnabled
-        onMapReady={() => setIsMapReady(true)}
+        minZoomLevel={minZoomLevel}
+        maxZoomLevel={maxZoomLevel}
+        onMapReady={handleMapReady}
+        zoomEnabled={zoomEnabled}
+        scrollEnabled={scrollEnabled}
+        pitchEnabled={pitchEnabled}
+        rotateEnabled={rotateEnabled}
+        moveOnMarkerPress={moveOnMarkerPress}
+        liteMode={liteMode}
       >
         {markers.map((marker, index) => (
           <Marker
@@ -90,16 +105,28 @@ export const CustomMapView = ({
               latitude: marker.latitude,
               longitude: marker.longitude,
             }}
+            pinColor={marker.pinColor}
           >
-            <View style={styles.markerContainer}>
-              <View style={styles.marker} />
-            </View>
+            {marker.iconName ? (
+              <View style={styles.markerContainer}>
+                <Icon name={marker.iconName} size={32} color={marker.pinColor} />
+              </View>
+            ) : null}
             <Callout>
               <Text>{marker.title}</Text>
             </Callout>
           </Marker>
         ))}
-      </MapView>
+        
+        {polylines.map((polyline, index) => (
+          <Polyline
+            key={`polyline-${index}`}
+            coordinates={polyline.coordinates}
+            strokeColor={polyline.strokeColor || '#000'}
+            strokeWidth={polyline.strokeWidth || 2}
+          />
+        ))}
+      </RNMapView>
 
       {(!isMapReady || locationError) && (
         <View style={styles.loadingContainer}>
@@ -115,7 +142,10 @@ export const CustomMapView = ({
       )}
     </View>
   );
-};
+});
+
+// Add display name for debugging
+MapView.displayName = 'MapView';
 
 const styles = StyleSheet.create({
   errorText: {
@@ -142,17 +172,7 @@ const styles = StyleSheet.create({
     color: COLORS.TEXT,
   },
   markerContainer: {
-    width: 30,
-    height: 30,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  marker: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: COLORS.PRIMARY,
-    borderWidth: 2,
-    borderColor: COLORS.WHITE,
   },
 });

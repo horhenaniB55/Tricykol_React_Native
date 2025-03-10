@@ -14,8 +14,8 @@
 		96905EF65AED1B983A6B3ABC /* libPods-TricykolDriver.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 58EEBF8E8E6FB1BC6CAF49B5 /* libPods-TricykolDriver.a */; };
 		B18059E884C0ABDD17F3DC3D /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAC715A2D49A985799AEE119 /* ExpoModulesProvider.swift */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
-		1645140DCC214CC59B41D4B9 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 3C26D90BF71E44E190B84C48 /* GoogleService-Info.plist */; };
-		7E6808A7442947D1BF1944D8 /* noop-file.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8EDBA7B15E6C4D089D7BC314 /* noop-file.swift */; };
+		630BC55E8DED42BE8A2C7E9A /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = FEB89F3323984429B20CC029 /* GoogleService-Info.plist */; };
+		B20A12FEFAEC43298217F2C5 /* noop-file.swift in Sources */ = {isa = PBXBuildFile; fileRef = 685BDD4BA8E34A2E9165659E /* noop-file.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -32,9 +32,9 @@
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		FAC715A2D49A985799AEE119 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-TricykolDriver/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
-		3C26D90BF71E44E190B84C48 /* GoogleService-Info.plist */ = {isa = PBXFileReference; name = "GoogleService-Info.plist"; path = "TricykolDriver/GoogleService-Info.plist"; sourceTree = "<group>"; fileEncoding = 4; lastKnownFileType = text.plist.xml; explicitFileType = undefined; includeInIndex = 0; };
-		8EDBA7B15E6C4D089D7BC314 /* noop-file.swift */ = {isa = PBXFileReference; name = "noop-file.swift"; path = "TricykolDriver/noop-file.swift"; sourceTree = "<group>"; fileEncoding = 4; lastKnownFileType = sourcecode.swift; explicitFileType = undefined; includeInIndex = 0; };
-		2C6705DA53924A73AC15F2EB /* TricykolDriver-Bridging-Header.h */ = {isa = PBXFileReference; name = "TricykolDriver-Bridging-Header.h"; path = "TricykolDriver/TricykolDriver-Bridging-Header.h"; sourceTree = "<group>"; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; explicitFileType = undefined; includeInIndex = 0; };
+		FEB89F3323984429B20CC029 /* GoogleService-Info.plist */ = {isa = PBXFileReference; name = "GoogleService-Info.plist"; path = "TricykolDriver/GoogleService-Info.plist"; sourceTree = "<group>"; fileEncoding = 4; lastKnownFileType = text.plist.xml; explicitFileType = undefined; includeInIndex = 0; };
+		685BDD4BA8E34A2E9165659E /* noop-file.swift */ = {isa = PBXFileReference; name = "noop-file.swift"; path = "TricykolDriver/noop-file.swift"; sourceTree = "<group>"; fileEncoding = 4; lastKnownFileType = sourcecode.swift; explicitFileType = undefined; includeInIndex = 0; };
+		DA873393EC2746C7AF8FF0B2 /* TricykolDriver-Bridging-Header.h */ = {isa = PBXFileReference; name = "TricykolDriver-Bridging-Header.h"; path = "TricykolDriver/TricykolDriver-Bridging-Header.h"; sourceTree = "<group>"; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; explicitFileType = undefined; includeInIndex = 0; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -59,9 +59,9 @@
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				13B07FB71A68108700A75B9A /* main.m */,
 				AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */,
-				3C26D90BF71E44E190B84C48 /* GoogleService-Info.plist */,
-				8EDBA7B15E6C4D089D7BC314 /* noop-file.swift */,
-				2C6705DA53924A73AC15F2EB /* TricykolDriver-Bridging-Header.h */,
+				FEB89F3323984429B20CC029 /* GoogleService-Info.plist */,
+				685BDD4BA8E34A2E9165659E /* noop-file.swift */,
+				DA873393EC2746C7AF8FF0B2 /* TricykolDriver-Bridging-Header.h */,
 			);
 			name = TricykolDriver;
 			sourceTree = "<group>";
@@ -201,8 +201,8 @@
 				BB2F792D24A3F905000567C9 /* Expo.plist in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */,
-				1645140DCC214CC59B41D4B9 /* GoogleService-Info.plist in Resources */,
-				5B4CCD5AD9934E479F128DCA /* TricykolDriver-Bridging-Header.h in Resources */,
+				630BC55E8DED42BE8A2C7E9A /* GoogleService-Info.plist in Resources */,
+				4628D3D27E394711A9671D0E /* TricykolDriver-Bridging-Header.h in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -278,7 +278,7 @@
 				13B07FBC1A68108700A75B9A /* AppDelegate.mm in Sources */,
 				13B07FC11A68108700A75B9A /* main.m in Sources */,
 				B18059E884C0ABDD17F3DC3D /* ExpoModulesProvider.swift in Sources */,
-				7E6808A7442947D1BF1944D8 /* noop-file.swift in Sources */,
+				B20A12FEFAEC43298217F2C5 /* noop-file.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

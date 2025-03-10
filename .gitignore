@@ -37,7 +37,7 @@ yarn-error.*
 # local env files
 .env*.local
 .env
-*.env*
+# *.env*
 *.env
 
 google-services.json
@@ -48,6 +48,24 @@ firebase.json
 firestore.indexes.json
 firestore.rules
 android/gradle.properties
+android/
+todo.txt
+log.txt
+otp-service/otp-server-passenger.js
+
+.cursor/
+app_icon/
+assets/tricykol_driver.png
+assets/tricykol_icon.png
+dfd.md
+diagrams
+driver-registration-web/
+
+.venv/
+flo
+
+
 
 # typescript
 *.tsbuildinfo
+.aider*

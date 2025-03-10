@@ -1,111 +1,175 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Platform, Alert } from 'react-native';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { View, Text, TouchableOpacity, StyleSheet, Platform, Alert, ActivityIndicator } from 'react-native';
+import { useNavigation, useRoute, CommonActions } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { COLORS } from '../../constants';
+import { COLORS, SCREENS } from '../../constants';
 import { useAuthStore } from '../../store/authStore';
 import useLocationStore from '../../store/locationStore';
+import useNotificationStore from '../../store/notificationStore';
+import useBookingVisibilityStore from '../../store/bookingVisibilityStore';
 import { reverseGeocode } from '../../utils/location';
 import { truncateString } from '../../utils';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { locationService } from '../../services/locationService';
+import { serviceManager } from '../../services/serviceManager';
+import * as Location from 'expo-location';
 
-const APPBAR_HEIGHT = Platform.OS === 'ios' ? 44 : 56;
+const APPBAR_HEIGHT = Platform.OS === 'ios' ? 44 : 68;
 const STATUSBAR_HEIGHT = Platform.OS === 'ios' ? 44 : 0;
 
 // Screens that should show the custom header with location/booking status
-const CUSTOM_HEADER_SCREENS = ['CurrentRide', 'Map', 'Rides', 'Wallet', 'Menu'];
+const CUSTOM_HEADER_SCREENS = ['CurrentRide', 'Map', 'Bookings', 'Wallet', 'Menu'];
+
+// Add these constants at the top of the file
+const LOCATION_NAME_CACHE_KEY = '@location_name_cache';
+const LOCATION_NAME_CACHE_EXPIRY = 1000 * 60 * 5; // 5 minutes
 
 /**
  * Component to display the custom status header with location/trip info and online toggle
  */
 const StatusHeader = () => {
-  const { driver, toggleDriverStatus } = useAuthStore();
+  const navigation = useNavigation();
+  const { driver } = useAuthStore();
+  const { unreadCount, startNotificationListener, stopNotificationListener } = useNotificationStore();
+  const { isBookingsVisible, setBookingsVisible } = useBookingVisibilityStore();
   const { 
     activeTrip, 
     currentLocation,
     locationServicesEnabled,
+    locationPermission,
     showLocationErrorModal,
-    setLocationError,
+    locationError,
+    locationErrorType,
+    startLocationTracking,
+    stopLocationTracking,
+    initializeLocation,
     clearLocationError,
-    startWatchingLocationAvailability,
-    stopWatchingLocationAvailability
+    getLastKnownLocation
   } = useLocationStore();
-  const [locationName, setLocationName] = useState("Loading...");
+  const [locationName, setLocationName] = useState(null);
   const [isToggling, setIsToggling] = useState(false);
-  const isOnline = driver?.status === "online";
+  const [isLocationLoading, setIsLocationLoading] = useState(true);
 
-  // Start watching location services when component mounts
+  // Start notification listener when component mounts
   useEffect(() => {
-    startWatchingLocationAvailability();
-    return () => stopWatchingLocationAvailability();
-  }, []);
+    let mounted = true;
 
-  // Update location name whenever current location changes
-  useEffect(() => {
-    let isMounted = true;
-
-    const updateLocationName = async () => {
-      if (!currentLocation) {
-        setLocationName("...");
-        return;
-      }
-
-      try {
-        const { latitude, longitude } = currentLocation;
-        const geocodeResult = await reverseGeocode(latitude, longitude);
-        
-        if (isMounted) {
-          if (geocodeResult && geocodeResult.length > 0) {
-            const location = geocodeResult[0];
-            
-            // Prioritize street name, then fall back to city
-            if (location.street) {
-              setLocationName(location.street);
-            } else if (location.city) {
-              setLocationName(location.city);
-            } else {
-              setLocationName(location.subregion || "Unknown Location");
-            }
-          } else {
-            setLocationName("Unknown Location");
-          }
-        }
-      } catch (error) {
-        console.error('Error updating location name:', error);
-        if (isMounted) {
-          setLocationName("Unknown Location");
-        }
+    const initializeNotifications = async () => {
+      if (driver?.id && mounted) {
+        console.log('[AppBar] Starting notification listener for driver:', driver.id);
+        await startNotificationListener(driver.id);
       }
     };
 
-    updateLocationName();
-    return () => { isMounted = false; };
+    initializeNotifications();
+      
+    // Cleanup listener when component unmounts
+    return () => {
+      mounted = false;
+      console.log('[AppBar] Cleaning up notification listener');
+      stopNotificationListener();
+    };
+  }, [driver?.id]);
+
+  // Get initial location on mount
+  useEffect(() => {
+    const fetchLocation = async () => {
+      console.log('[AppBar] Fetching initial location');
+      setIsLocationLoading(true);
+      const location = await getLastKnownLocation();
+      if (location) {
+        await updateLocationName(location);
+      }
+      setIsLocationLoading(false);
+    };
+    fetchLocation();
+  }, []);
+
+  // Update location name when current location changes
+  useEffect(() => {
+    if (currentLocation) {
+      setIsLocationLoading(true);
+      updateLocationName(currentLocation);
+    }
   }, [currentLocation]);
 
-  // Handle toggle status - make this handle the modal directly
+  const updateLocationName = async (location) => {
+    try {
+      const { latitude, longitude } = location;
+      
+      // Generate cache key
+      const cacheKey = `${latitude.toFixed(4)}_${longitude.toFixed(4)}`;
+      
+      // Try to get from cache first
+      const cached = await AsyncStorage.getItem(`${LOCATION_NAME_CACHE_KEY}_${cacheKey}`);
+      if (cached) {
+        const { name, timestamp } = JSON.parse(cached);
+        if (Date.now() - timestamp < LOCATION_NAME_CACHE_EXPIRY) {
+          setLocationName(name);
+          setIsLocationLoading(false);
+          return;
+        }
+      }
+
+      const geocodeResult = await reverseGeocode(latitude, longitude);
+      
+      if (geocodeResult && geocodeResult.length > 0) {
+        const locationData = geocodeResult[0];
+        let name = "Unknown Location";
+        
+        if (locationData.street) {
+          name = locationData.street;
+        } else if (locationData.city) {
+          name = locationData.city;
+        } else if (locationData.subregion) {
+          name = locationData.subregion;
+        }
+
+        // Cache the result
+        await AsyncStorage.setItem(`${LOCATION_NAME_CACHE_KEY}_${cacheKey}`, JSON.stringify({
+          name,
+          timestamp: Date.now()
+        }));
+
+        setLocationName(name);
+        setIsLocationLoading(false);
+      }
+    } catch (error) {
+      console.error('[AppBar] Error updating location name:', error);
+      setLocationName("Unknown Location");
+      setIsLocationLoading(false);
+    }
+  };
+
+  // Handle toggle
   const handleToggle = async () => {
     if (isToggling) return;
     
     try {
       setIsToggling(true);
       
-      // The problem is here - we need to check if we're trying to go online
-      // with location disabled, not if we're already offline with location disabled
+      // Quick check of location permission and services without initialization
+      const { status } = await Location.getForegroundPermissionsAsync();
+      const servicesEnabled = await Location.hasServicesEnabledAsync();
       
-      // FIXED CONDITION: If currently offline (trying to go online) AND location is disabled
-      if (driver?.status === 'offline' && !locationServicesEnabled) {
-        console.log('Trying to go online with location disabled, showing error modal');
-        
-        // Force modal to show
-        setLocationError('services');
-        
-        // Reset toggle state
+      if (status !== 'granted' || !servicesEnabled) {
+        console.log('[AppBar] Location services not available');
+        Alert.alert(
+          'Location Error', 
+          'Please enable location services and permissions to show bookings.',
+          [{ text: 'OK' }]
+        );
         setIsToggling(false);
         return;
       }
+
+      // Toggle visibility in both store and AsyncStorage
+      const newVisibility = !isBookingsVisible;
+      await AsyncStorage.setItem('bookings_visible', JSON.stringify(newVisibility));
+      setBookingsVisible(newVisibility);
       
-      // Otherwise proceed with the toggle
-      await toggleDriverStatus();
     } catch (error) {
+      console.error('[AppBar] Error toggling visibility:', error);
       Alert.alert('Error', error.message);
     } finally {
       setIsToggling(false);
@@ -127,43 +191,63 @@ const StatusHeader = () => {
           return activeTrip.status;
       }
     }
-    return locationName;
+    
+    // Return null if location is still loading
+    if (isLocationLoading) {
+      return null;
+    }
+    
+    return locationName || "Unknown location";
   };
 
-  const MAX_LOCATION_LENGTH = 20; // Maximum characters for location name before truncating
+  const MAX_LOCATION_LENGTH = 20;
 
   return (
     <View style={styles.container}>
       {/* Left section with status and balance */}
       <View style={styles.leftSection}>
-        <Text style={styles.locationText} numberOfLines={1}>
-          {truncateString(getStatusText(), MAX_LOCATION_LENGTH)} (₱{driver?.walletBalance?.toFixed(2) || '0.00'})
-        </Text>
+        {isLocationLoading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="small" color={COLORS.PRIMARY} style={styles.locationLoader} />
+            <Text style={styles.locationText}> (₱{driver?.walletBalance?.toFixed(2) || '0.00'})</Text>
+          </View>
+        ) : (
+          <Text style={styles.locationText} numberOfLines={1}>
+            {truncateString(getStatusText(), MAX_LOCATION_LENGTH)} (₱{driver?.walletBalance?.toFixed(2) || '0.00'})
+          </Text>
+        )}
       </View>
 
-      {/* Right section with online/offline toggle */}
-      <View style={styles.rightSection}>
-        <TouchableOpacity 
-          onPress={handleToggle}
-          disabled={isToggling}
-          activeOpacity={0.7}
-          hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}
-          style={[
-            styles.toggleButtonContainer,
-            isToggling && styles.toggleButtonDisabled
-          ]}>
-          <View style={[
-            styles.toggleButton,
-            { backgroundColor: isOnline ? COLORS.SUCCESS : COLORS.ERROR }
-          ]}>
-            <View style={styles.toggleTextContainer}>
-              <Text style={[styles.toggleText, styles.toggleBoldText]}>
-                {isOnline ? 'ON' : 'OFF'}
-              </Text>
-            </View>
+      {/* Notification button with optimized badge */}
+      <TouchableOpacity 
+        style={styles.notificationButton}
+        onPress={() => navigation.navigate('Notifications')}
+      >
+        <Icon name="notifications" size={24} color={COLORS.TEXT} />
+        {typeof unreadCount === 'number' && unreadCount > 0 && (
+          <View style={styles.badge}>
+            <Text style={styles.badgeText}>
+              {unreadCount > 99 ? '99+' : unreadCount}
+            </Text>
           </View>
-        </TouchableOpacity>
-      </View>
+        )}
+      </TouchableOpacity>
+
+      {/* Optimized toggle button */}
+      <TouchableOpacity 
+        onPress={handleToggle}
+        disabled={isToggling}
+        activeOpacity={0.8}
+        style={[
+          styles.statusButton,
+          isBookingsVisible ? styles.onlineButton : styles.offlineButton,
+          isToggling && styles.buttonDisabled
+        ]}
+      >
+        <Text style={styles.statusText}>
+          {isToggling ? <ActivityIndicator size="small" color={COLORS.GRAY_LIGHT} style={{ padding: 5 }} /> : isBookingsVisible ? 'ON' : 'OFF'}
+        </Text>
+      </TouchableOpacity>
     </View>
   );
 };
@@ -181,8 +265,39 @@ export const AppBar = ({
   style,
   titleStyle,
   subtitleStyle,
+  showLocation = false,
 }) => {
   const navigation = useNavigation();
+  const route = useRoute();
+  const { driver } = useAuthStore();
+  const currentLocation = useLocationStore(state => state.currentLocation);
+  const [locationName, setLocationName] = useState('');
+
+  useEffect(() => {
+    const updateLocationName = async () => {
+      if (!currentLocation?.latitude || !currentLocation?.longitude) {
+        return;
+      }
+
+      try {
+        const geocodeResult = await reverseGeocode(
+          currentLocation.latitude,
+          currentLocation.longitude
+        );
+
+        if (geocodeResult && geocodeResult[0]) {
+          const { street, name, city } = geocodeResult[0];
+          setLocationName(street || name || city || 'Unknown location');
+        }
+      } catch (error) {
+        console.error('Error updating location name:', error);
+      }
+    };
+
+    if (showLocation) {
+      updateLocationName();
+    }
+  }, [currentLocation, showLocation]);
 
   const handleBack = () => {
     if (onBack) {
@@ -192,7 +307,6 @@ export const AppBar = ({
     }
   };
 
-  const route = useRoute();
   const showCustomHeader = CUSTOM_HEADER_SCREENS.includes(route.name);
 
   const renderLeft = () => {
@@ -270,43 +384,40 @@ const styles = StyleSheet.create({
     color: COLORS.TEXT,
     fontWeight: '600',
   },
-  toggleButtonContainer: {
-    height: 35,
-    width: 60,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 4,
-  },
-  toggleButton: {
+  statusButton: {
     paddingHorizontal: 16,
-    paddingVertical: 6,
-    borderRadius: 16,
-    width: 52,
-    height: 24,
+    paddingVertical: 4,
+    borderRadius: 20,
+    minWidth: 90,
+    justifyContent: 'center',
     alignItems: 'center',
-    justifyContent: 'center',
+    marginRight: 8,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
-  toggleTextContainer: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: 1,
-    bottom: 0,
-    alignItems: 'center', 
-    justifyContent: 'center',
+  onlineButton: {
+    backgroundColor: COLORS.SUCCESS,
   },
-  toggleText: {
+  offlineButton: {
+    backgroundColor: COLORS.ERROR,
+  },
+  buttonDisabled: {
+    opacity: 0.8,
+  },
+  statusText: {
     color: COLORS.WHITE,
-    fontSize: 12,
-    fontWeight: Platform.select({
-      ios: '900',
-      android: 'bold'
-    }),
+    fontSize: 14,
+    fontWeight: '600',
     textAlign: 'center',
-    includeFontPadding: false,
-    textShadowColor: 'rgba(0,0,0,0.15)',
-    textShadowOffset: {width: 0, height: 1},
-    textShadowRadius: 1,
+    textShadowColor: 'rgba(0, 0, 0, 0.2)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
   titleSection: {
     flex: 2,
@@ -321,5 +432,58 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 14,
     color: COLORS.TEXT_SECONDARY,
+  },
+  actionButton: {
+    padding: 10,
+  },
+  header: {
+    height: APPBAR_HEIGHT + STATUSBAR_HEIGHT,
+    paddingTop: STATUSBAR_HEIGHT,
+    backgroundColor: COLORS.WHITE,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 4,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.GRAY_LIGHT,
+  },
+  backButton: {
+    padding: 10,
+  },
+  rightSection: {
+    minWidth: 48,
+    height: APPBAR_HEIGHT,
+    justifyContent: 'center',
+    alignItems: 'flex-end',
+    marginRight: 8,
+  },
+  locationLoader: {
+    marginRight: 4,
+  },
+  loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  notificationButton: {
+    padding: 8,
+    marginRight: 8,
+    position: 'relative',
+  },
+  badge: {
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    backgroundColor: COLORS.ERROR,
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 4,
+  },
+  badgeText: {
+    color: COLORS.WHITE,
+    fontSize: 12,
+    fontWeight: 'bold',
   },
 });

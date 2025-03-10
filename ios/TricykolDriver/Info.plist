@@ -7,7 +7,7 @@
     <key>CFBundleDevelopmentRegion</key>
     <string>$(DEVELOPMENT_LANGUAGE)</string>
     <key>CFBundleDisplayName</key>
-    <string>Tricykol_Driver</string>
+    <string>Tricykol Driver</string>
     <key>CFBundleExecutable</key>
     <string>$(EXECUTABLE_NAME)</string>
     <key>CFBundleIdentifier</key>
@@ -59,14 +59,15 @@
       <true/>
     </dict>
     <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-    <string>Allow $(PRODUCT_NAME) to access your location</string>
+    <string>Tricykol Driver needs your location to show your position on the map and process bookings even when the app is in background.</string>
     <key>NSLocationAlwaysUsageDescription</key>
     <string>This app needs access to location when in the background for navigation.</string>
     <key>NSLocationWhenInUseUsageDescription</key>
-    <string>This app needs access to location when open to show your position on the map.</string>
+    <string>Tricykol Driver needs your location to show your position on the map and process bookings.</string>
     <key>UIBackgroundModes</key>
     <array>
       <string>location</string>
+      <string>fetch</string>
     </array>
     <key>UILaunchStoryboardName</key>
     <string>SplashScreen</string>

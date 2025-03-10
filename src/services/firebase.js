@@ -3,9 +3,14 @@ import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
 import storage from '@react-native-firebase/storage';
 import functions from '@react-native-firebase/functions';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import Constants from 'expo-constants';
 
 // Export Firestore FieldValue for timestamps
 export const { FieldValue } = firestore;
+
+// OTP service URL for driver authentication
+export const OTP_SERVICE_URL = 'https://otp-service-666017533126.asia-southeast1.run.app';
 
 // Initialize Firebase if it hasn't been initialized yet
 if (getApps().length === 0) {
@@ -82,8 +87,115 @@ export const getDoc = (collectionPath, docId) => {
   return firestore().collection(collectionPath).doc(docId);
 };
 
-// Add this to log the project ID
-export const logFirebaseProjectInfo = () => {
-  console.log('Firebase app name:', app.name);
-  console.log('Firebase options:', app.options);
+/**
+ * OTP verification function
+ * @param {string} phoneNumber - Phone number with country code
+ * @param {string} otp - OTP code
+ * @param {boolean} isRegistration - Whether this is for registration
+ * @returns {Promise<Object>} Result object
+ */
+export const verifyOtp = async (phoneNumber, otp, isRegistration = false) => {
+  try {
+    const response = await fetch(`${OTP_SERVICE_URL}/verify-otp`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        phone: phoneNumber,
+        otp,
+        isRegistration,
+      }),
+    });
+
+    const data = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to verify OTP');
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('OTP verification error:', error);
+    throw error;
+  }
 };
+
+/**
+ * Restore auth session from AsyncStorage
+ * @returns {Promise<Object|null>} The authenticated user or null
+ */
+export const restoreAuthSession = async () => {
+  try {
+    // With React Native Firebase, the auth state is automatically persisted
+    const currentUser = auth().currentUser;
+    return currentUser;
+  } catch (error) {
+    console.error('Error restoring auth session:', error);
+    return null;
+  }
+};
+
+/**
+ * Create a document in Firestore
+ * @param {string} collection - Collection name
+ * @param {Object} data - Document data
+ * @param {string} docId - Document ID (optional)
+ * @returns {Promise<Object>} Document reference
+ */
+export const createDocument = async (collection, data, docId = null) => {
+  try {
+    const collectionRef = firestore().collection(collection);
+    
+    if (docId) {
+      await collectionRef.doc(docId).set(data);
+      return collectionRef.doc(docId);
+    } else {
+      const docRef = await collectionRef.add(data);
+      return docRef;
+    }
+  } catch (error) {
+    console.error('Error creating document:', error);
+    throw error;
+  }
+};
+
+/**
+ * Update a document in Firestore
+ * @param {string} collection - Collection name
+ * @param {string} docId - Document ID
+ * @param {Object} data - Document data to update
+ * @returns {Promise<void>}
+ */
+export const updateDocument = async (collection, docId, data) => {
+  try {
+    await firestore().collection(collection).doc(docId).update(data);
+  } catch (error) {
+    console.error('Error updating document:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get a document from Firestore
+ * @param {string} collection - Collection name
+ * @param {string} docId - Document ID
+ * @returns {Promise<Object|null>} Document data or null
+ */
+export const getDocument = async (collection, docId) => {
+  try {
+    const docSnap = await firestore().collection(collection).doc(docId).get();
+    
+    if (docSnap.exists) {
+      return { id: docSnap.id, ...docSnap.data() };
+    } else {
+      return null;
+    }
+  } catch (error) {
+    console.error('Error getting document:', error);
+    throw error;
+  }
+};
+
+// Export auth for direct access
+export { auth };

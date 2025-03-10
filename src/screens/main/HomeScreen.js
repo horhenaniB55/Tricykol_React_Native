@@ -9,6 +9,8 @@ import useLocationStore from '../../store/locationStore';
 import { getAuth } from '../../services/firebase';
 import { checkLocationServices } from '../../utils/location';
 import { AuthService } from '../../services/auth';
+import { useNavigation } from '@react-navigation/native';
+import { firestore } from '../../services/firebase';
 
 /**
  * Home screen component with map
@@ -17,142 +19,106 @@ import { AuthService } from '../../services/auth';
  * @param {Object} props.navigation - Navigation object
  * @returns {React.ReactElement} HomeScreen component
  */
-export const HomeScreen = ({ navigation }) => {
-  const { driver, toggleDriverStatus } = useAuthStore();
+export const HomeScreen = () => {
+  const navigation = useNavigation();
+  const { driver } = useAuthStore();
+  const { locationServicesEnabled } = useLocationStore();
+  const [isBookingsVisible, setIsBookingsVisible] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
-  const {
-    startLocationTracking,
-    stopLocationTracking,
-    selectNearbyBookings,
-    locationError,
-    isTracking,
-    selectCurrentLocation,
-    setLocationError,
-    clearLocationError,
-    showLocationErrorModal,
-    locationServicesEnabled,
-  } = useLocationStore();
+  const [stats, setStats] = useState({
+    totalTrips: 0,
+    totalEarnings: 0,
+    rating: 0
+  });
 
-  const currentLocation = selectCurrentLocation();
-  const nearbyBookings = selectNearbyBookings();
-  const [isOnline, setIsOnline] = useState(false);
+  // Update stats when driver data changes
+  useEffect(() => {
+    if (!driver?.id) return;
+    
+    const fetchStats = async () => {
+      try {
+        const statsDoc = await firestore()
+          .collection('driver_stats')
+          .doc(driver.id)
+          .get();
+          
+        if (statsDoc.exists) {
+          setStats(statsDoc.data());
+        }
+      } catch (error) {
+        console.error('Error fetching stats:', error);
+      }
+    };
+    
+    fetchStats();
+  }, [driver?.id]);
 
-  // Toggle driver online/offline status
-  const handleStatusToggle = async () => {
+  // Handle location service changes
+  useEffect(() => {
+    if (!locationServicesEnabled) {
+      setIsBookingsVisible(false);
+    }
+  }, [locationServicesEnabled]);
+
+  // Handle toggle
+  const handleToggle = async () => {
     try {
       setIsLoading(true);
-      await toggleDriverStatus(); // This now handles everything
+      setIsBookingsVisible(!isBookingsVisible);
     } catch (error) {
-      Alert.alert('Error', error.message);
+      console.error('Error toggling visibility:', error);
     } finally {
       setIsLoading(false);
     }
   };
-
-  // Sign out handler
-  const handleSignOut = async () => {
-    try {
-      setIsLoading(true);
-      await getAuth().signOut();
-    } catch (error) {
-      console.error('Error signing out:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Add this effect to monitor location services
-  useEffect(() => {
-    if (!locationServicesEnabled && driver?.status === 'online') {
-      // Update local UI state
-      setIsOnline(false);
-    }
-  }, [locationServicesEnabled, driver?.status]);
-
-  // Update the isOnline state to reflect the actual driver status
-  useEffect(() => {
-    if (driver) {
-      setIsOnline(driver.status === 'online');
-    }
-  }, [driver?.status]);
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
-        <AppBar
-          title={`Hello, ${driver?.name || 'Driver'}`}
-          subtitle={isOnline ? 'You are online' : 'You are offline'}
-          rightAction={
-            <View style={styles.headerRight}>
-              <Switch
-                value={isOnline}
-                onValueChange={handleStatusToggle}
-                trackColor={{ false: COLORS.GRAY, true: COLORS.PRIMARY }}
-                thumbColor={COLORS.WHITE}
-                style={{ marginRight: 8 }}
-              />
-              <Text 
-                style={styles.signOut}
-                onPress={handleSignOut}
-              >
-                Sign Out
-              </Text>
-            </View>
-          }
-        />
-        {/* Map */}
-        <View style={styles.mapContainer}>
-          <MapView />
+    <SafeAreaView style={styles.container}>
+      <AppBar 
+        title="Home"
+        subtitle={isBookingsVisible ? 'Bookings Visible' : 'Bookings Hidden'}
+      />
+      <View style={styles.content}>
+        <View style={styles.toggleContainer}>
+          <Text style={styles.toggleLabel}>Show Available Bookings</Text>
+          <Switch
+            value={isBookingsVisible}
+            onValueChange={handleToggle}
+            disabled={isLoading}
+            trackColor={{ false: COLORS.GRAY_LIGHT, true: COLORS.SUCCESS }}
+            thumbColor={COLORS.WHITE}
+          />
         </View>
 
-        {/* Bottom panel */}
-        <View style={styles.bottomPanel}>
-          <Text style={styles.panelTitle}>
-            {isOnline
-              ? nearbyBookings.length > 0
-                ? 'Nearby Bookings'
-                : currentLocation
-                  ? 'No nearby bookings found'
-                  : 'Getting your location...'
-              : 'Go online to see nearby bookings'}
-          </Text>
-
-          {isOnline && (
-            <View style={styles.emptyState}>
-              {!currentLocation && (
-                <Text style={styles.loadingText}>Getting your location...</Text>
-              )}
-              {currentLocation && nearbyBookings.length === 0 && (
-                <Text style={styles.emptyStateText}>
-                  No bookings found within 700m radius
-                </Text>
-              )}
-              {nearbyBookings.map((booking) => (
-                <TouchableOpacity
-                  key={booking.id}
-                  style={styles.bookingItem}
-                  onPress={() => {
-                    /* Handle booking selection */
-                  }}>
-                  <Text style={styles.bookingTitle}>
-                    {booking.pickupLocation.name}
-                  </Text>
-                  <Text style={styles.bookingDistance}>
-                    {Math.round(booking.distance)}m away
-                  </Text>
-                </TouchableOpacity>
-              ))}
+        {isBookingsVisible && (
+          <View style={styles.statsContainer}>
+            <View style={styles.statItem}>
+              <Text style={styles.statValue}>{stats.totalTrips}</Text>
+              <Text style={styles.statLabel}>Total Trips</Text>
             </View>
-          )}
-        </View>
-        <LocationErrorModal
-          isVisible={showLocationErrorModal}
-          onClose={clearLocationError}
-          errorType={locationError}
-        />
+            <View style={styles.statItem}>
+              <Text style={styles.statValue}>₱{stats.totalEarnings.toFixed(2)}</Text>
+              <Text style={styles.statLabel}>Total Earnings</Text>
+            </View>
+            <View style={styles.statItem}>
+              <Text style={styles.statValue}>{stats.rating.toFixed(1)}</Text>
+              <Text style={styles.statLabel}>Rating</Text>
+            </View>
+          </View>
+        )}
+
+        {isBookingsVisible && (
+          <View style={styles.mapPreviewContainer}>
+            <Text style={styles.mapPreviewTitle}>Current Location</Text>
+            <TouchableOpacity 
+              style={styles.mapPreview}
+              onPress={() => navigation.navigate('Map')}
+            >
+              {/* Map preview content */}
+            </TouchableOpacity>
+          </View>
+        )}
       </View>
-
-      {isLoading && <Loading />}
     </SafeAreaView>
   );
 };
@@ -220,5 +186,50 @@ const styles = StyleSheet.create({
   emptyStateText: {
     color: COLORS.TEXT_SECONDARY,
     textAlign: 'center',
+  },
+  toggleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+  },
+  toggleLabel: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: COLORS.TEXT,
+    marginRight: 16,
+  },
+  statsContainer: {
+    padding: 16,
+  },
+  statItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  statValue: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: COLORS.TEXT,
+    marginRight: 8,
+  },
+  statLabel: {
+    fontSize: 14,
+    color: COLORS.TEXT_SECONDARY,
+  },
+  mapPreviewContainer: {
+    padding: 16,
+  },
+  mapPreviewTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: COLORS.TEXT,
+    marginBottom: 12,
+  },
+  mapPreview: {
+    backgroundColor: COLORS.WHITE,
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: COLORS.GRAY_LIGHT,
   },
 });

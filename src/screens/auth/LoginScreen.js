@@ -25,39 +25,95 @@ import { useAuthStore } from '../../store/authStore';
  */
 export const LoginScreen = ({ navigation }) => {
   const [phoneNumber, setPhoneNumber] = useState('');
+  const [formattedPhoneNumber, setFormattedPhoneNumber] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const { loading: authLoading, error: authError } = useAuthStore();
+  const { error: authError } = useAuthStore();
 
   // Format phone number as user types
   const handlePhoneChange = (text) => {
     // Remove non-numeric characters
     const cleaned = text.replace(/\D/g, '');
-    setPhoneNumber(cleaned);
+    
+    // Limit to 11 digits
+    const limited = cleaned.slice(0, 11);
+    
+    // Store the raw value
+    setPhoneNumber(limited);
+    
+    // Format for display (09XX XXX XXXX)
+    let formatted = '';
+    if (limited.length > 0) {
+      // First part (09XX)
+      formatted = limited.slice(0, 4);
+      
+      // Add space and second part (XXX) if available
+      if (limited.length > 4) {
+        formatted += ' ' + limited.slice(4, 7);
+        
+        // Add space and third part (XXXX) if available
+        if (limited.length > 7) {
+          formatted += ' ' + limited.slice(7, 11);
+        }
+      }
+    }
+    
+    setFormattedPhoneNumber(formatted);
     setError('');
+  };
+
+  // Validate phone number
+  const validatePhoneNumber = (number) => {
+    if (!number) {
+      return 'Please enter your mobile number';
+    }
+    
+    if (number.length !== 11) {
+      return 'Mobile number must be 11 digits';
+    }
+    
+    if (!number.startsWith('09')) {
+      return 'Mobile number must start with 09';
+    }
+    
+    return null;
   };
 
   // Handle login button press
   const handleLogin = async () => {
     try {
       // Validate phone number
-      if (!phoneNumber || phoneNumber.length < 10) {
-        setError('Please enter a valid phone number');
+      const validationError = validatePhoneNumber(phoneNumber);
+      if (validationError) {
+        setError(validationError);
         return;
       }
 
       setIsLoading(true);
       
-      // Format phone number with country code if not already present
-      const formattedNumber = phoneNumber.startsWith('+')
-        ? phoneNumber
-        : `+63${phoneNumber.startsWith('0') ? phoneNumber.substring(1) : phoneNumber}`;
+      // Format phone number with country code
+      // Convert 09XXXXXXXXX to +639XXXXXXXXX
+      const formattedNumber = `+63${phoneNumber.substring(1)}`;
       
-      // Send OTP
-      await AuthService.sendOtp(formattedNumber);
+      console.log('Sending OTP to:', formattedNumber);
       
-      // Navigate to OTP verification screen
-      navigation.navigate(SCREENS.OTP_VERIFICATION, { phoneNumber: formattedNumber });
+      // Use the store's sendOtp method
+      const result = await useAuthStore.getState().sendOtp(formattedNumber);
+      
+      if (result.success) {
+        console.log('OTP sent successfully, navigating to verification screen');
+        
+        // Make sure we're using the exact screen name from constants
+        console.log('Navigating to screen:', SCREENS.OTP_VERIFICATION);
+        
+        // Navigate immediately without setTimeout
+        navigation.navigate(SCREENS.OTP_VERIFICATION, { 
+          phoneNumber: formattedNumber 
+        });
+      } else {
+        console.error('Failed to send OTP:', result.error);
+        setError(result.error || 'Failed to send OTP. Please try again.');
+      }
     } catch (error) {
       console.error('Login error:', error);
       setError(error.message || 'Failed to send OTP. Please try again.');
@@ -68,10 +124,14 @@ export const LoginScreen = ({ navigation }) => {
 
   // Handle register button press
   const handleRegister = () => {
-    // For now, just show an alert that registration is on the website
-    alert('Please register on the Tricykol website');
-    // In a real app, you might open the website in a browser
-    // Linking.openURL('https://tricykol.com/register');
+    // Open the Tricykol registration website in the default browser
+    const registrationUrl = 'https://tricykol-driver-register-666017533126.asia-southeast1.run.app/register';
+    
+    Linking.openURL(registrationUrl)
+      .catch(err => {
+        console.error('Error opening registration website:', err);
+        alert(`Could not open the registration website. Please visit ${registrationUrl} manually.`);
+      });
   };
 
   // Display error from auth store if present
@@ -92,31 +152,40 @@ export const LoginScreen = ({ navigation }) => {
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.logoContainer}>
-            <Text style={styles.logoText}>TRICYKOL</Text>
-            <Text style={styles.logoSubtext}>driver</Text>
+            <Image 
+              source={require('../../../assets/tricykol_driver.png')}
+              style={styles.logoImage}
+              resizeMode="contain"
+            />
           </View>
 
           <View style={styles.formContainer}>
             <Input
               label="Mobile Number"
-              value={phoneNumber}
+              value={formattedPhoneNumber}
               onChangeText={handlePhoneChange}
-              placeholder="0967 057 5500"
+              placeholder="09XX XXX XXXX"
               keyboardType="phone-pad"
               error={error}
+              maxLength={13} // 11 digits + 2 spaces
             />
+            
+            <Text style={styles.helperText}>
+              Enter your 11-digit mobile number starting with 09
+            </Text>
 
             <Button
               title="LOG IN"
               onPress={handleLogin}
               loading={isLoading}
-              disabled={!phoneNumber || phoneNumber.length < 10}
+              disabled={!phoneNumber || phoneNumber.length !== 11 || isLoading}
               style={styles.loginButton}
             />
 
             <TouchableOpacity
               style={styles.registerButton}
               onPress={handleRegister}
+              disabled={isLoading}
             >
               <Text style={styles.registerText}>REGISTER</Text>
             </TouchableOpacity>
@@ -127,8 +196,6 @@ export const LoginScreen = ({ navigation }) => {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
-
-      {authLoading && <Loading message="Please wait..." />}
     </SafeAreaView>
   );
 };
@@ -136,7 +203,7 @@ export const LoginScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: COLORS.BLACK,
+    backgroundColor: "#263E61",
   },
   container: {
     flex: 1,
@@ -150,19 +217,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 40,
   },
-  logoText: {
-    fontSize: 40,
-    fontWeight: 'bold',
-    color: COLORS.WHITE,
-    textAlign: 'center',
-  },
-  logoSubtext: {
-    fontSize: 24,
-    color: COLORS.WHITE,
-    marginTop: 8,
+  logoImage: {
+    width: 300,
+    height: 150,
   },
   formContainer: {
     width: '100%',
+  },
+  helperText: {
+    fontSize: 12,
+    color: COLORS.GRAY,
+    marginTop: -12,
+    marginBottom: 16,
   },
   loginButton: {
     marginTop: 20,

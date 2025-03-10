@@ -1,125 +1,105 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { View, Text, StyleSheet } from 'react-native';
-import { MainStack } from './src/navigation/MainStack';
+import { View, Text, StyleSheet, AppState } from 'react-native';
+import { RootNavigator } from './src/navigation';
 import { useAuthStore } from './src/store/authStore';
 import useLocationStore from './src/store/locationStore';
 import { AuthService } from './src/services/auth';
 import { getAuth, getFirebaseApp } from './src/services/firebase';
 import { COLORS } from './src/constants';
 import { Loading, LocationErrorModal } from './src/components/common';
+import { serviceManager } from './src/services/serviceManager';
+
+// Silence Firebase deprecation warnings
+globalThis.RNFB_SILENCE_MODULAR_DEPRECATION_WARNINGS = true;
 
 /**
  * Main application component
  * @returns {React.ReactElement} The App component
  */
 export default function App() {
-  const { setDriver, setError, setLoading } = useAuthStore();
-  const {
-    checkLocationStatus,
-    showLocationErrorModal,
-    locationErrorType,
+  const { initialize, isAuthenticated, needsWebRegistration, initialized, driver } = useAuthStore();
+  const { 
+    locationError,
     clearLocationError,
-    setLocationError, // Add this
-    startWatchingLocationAvailability,
-    stopWatchingLocationAvailability,
+    cleanup: cleanupLocation
   } = useLocationStore();
   const [appInitialized, setAppInitialized] = useState(false);
   const [initError, setInitError] = useState(null);
+  const appState = useRef(AppState.currentState);
 
   // Initialize app
   useEffect(() => {
-    const initializeApp = async () => {
+    const initApp = async () => {
       try {
-        console.log('Initializing app...');
-        // Get Firebase app to ensure it's initialized
-        const app = getFirebaseApp();
-        console.log('Firebase app initialized:', app.name);
-
-        // Check location permissions and services *before* watching
-        const initialStatus = await checkLocationStatus();
-
-        // If location is not enabled on startup, show the modal
-        if (initialStatus && (initialStatus.foreground !== 'granted' || initialStatus.services !== 'enabled')) {
-          // Use the existing actions to set the error state and show the modal
-          const errorType = initialStatus.foreground !== 'granted' ? 'permission' : 'services';
-          setLocationError(errorType); // This will set showLocationErrorModal to true
-        }
-
-      // Start watching location availability for real-time updates
-      startWatchingLocationAvailability();
-
-      // Removed the conditional call to startLocationTracking here.
-      // The startLocationTracking function in locationStore already
-      // handles getting the initial location.
-
-      setAppInitialized(true);
-    } catch (error) {
-        console.error('Error initializing app:', error);
-        setInitError(error instanceof Error ? error.message : 'Failed to initialize app');
+        // Initialize auth first
+        await initialize();
+        
+        // Initialize service manager with a small delay to ensure store is ready
+        setTimeout(async () => {
+          try {
+            await serviceManager.initialize();
+            console.log('Service manager initialized successfully');
+          } catch (error) {
+            console.error('Error initializing service manager:', error);
+          }
+        }, 500);
+        
+        setAppInitialized(true);
+      } catch (error) {
+        console.error('App initialization error:', error);
+        setInitError(error.message);
       }
     };
-  
-      initializeApp();
 
-      // Cleanup function
-      return () => {
-        stopWatchingLocationAvailability();
-      }
-    }, []);
+    initApp();
 
-      // Subscribe to auth state changes
-    useEffect(() => {
-      if (!appInitialized) return;
-  
-      console.log('Setting up auth state listener');
-      setLoading(true);
-      const unsubscribe = getAuth().onAuthStateChanged(async (user) => {
-        try {
-          if (user) {
-            console.log('Auth state changed - User signed in:', user.uid);
-            const driverProfile = await AuthService.getDriverProfile(user.uid);
-            if (!driverProfile) {
-              console.log('No driver profile found for:', user.uid);
-              setError('Phone number not yet registered');
-              await getAuth().signOut();
-            } else {
-              console.log('Driver profile loaded:', driverProfile.name);
-              setDriver(driverProfile);
-            }
-          } else {
-            console.log('Auth state changed - User signed out');
-            setDriver(null);
-          }
-        } catch (error) {
-          console.error('Error in auth state change:', error);
-          setError(error instanceof Error ? error.message : 'Unknown error occurred');
-          if (user) {
-            try {
-              await getAuth().signOut();
-            } catch (signOutError) {
-              console.error('Error signing out after auth error:', signOutError);
-            }
-          }
-        } finally {
-          setLoading(false);
-        }
-      });
-  
-      return () => {
-        console.log('Cleaning up auth state listener');
-        unsubscribe();
-        setLoading(false);
-      };
-    }, [appInitialized]);
+    // Cleanup on unmount
+    return () => {
+      cleanupLocation();
+      serviceManager.cleanup();
+    };
+  }, []);
 
-  // Make sure there's no automatic clearing of the modal
+  // Initialize bookings service when driver is authenticated
   useEffect(() => {
-    if (showLocationErrorModal) {
-      console.log('Modal is visible in App.js');
+    if (isAuthenticated && driver && driver.id && initialized && appInitialized) {
+      console.log('Initializing bookings service for driver:', driver.id);
+      try {
+        // Initialize bookings service and handle the promise
+        serviceManager.initializeBookingsService(driver.id)
+          .catch(error => {
+            console.error('Error initializing bookings service:', error);
+          });
+      } catch (error) {
+        console.error('Error initializing bookings service:', error);
+      }
     }
-  }, [showLocationErrorModal]);
+  }, [isAuthenticated, driver, initialized, appInitialized]);
+
+  // Add AppState listener to detect when app comes to foreground
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', nextAppState => {
+      // Check if app has come to the foreground
+      if (appState.current.match(/inactive|background/) && nextAppState === 'active') {
+        console.log('App has come to the foreground');
+        // Check location status when app is brought to foreground
+        if (isAuthenticated && !needsWebRegistration) {
+          console.log('Checking location status after app foregrounded');
+          setTimeout(() => {
+            serviceManager.checkLocationStatus()
+              .catch(err => console.error('Error checking location status:', err));
+          }, 500);
+        }
+      }
+      appState.current = nextAppState;
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [isAuthenticated, needsWebRegistration]);
 
   if (initError) {
     return (
@@ -131,19 +111,15 @@ export default function App() {
   }
 
   // Show loading screen while initializing
-  if (!appInitialized) {
-    return <Loading message="Initializing app..." />;
+  if (!appInitialized || !initialized) {
+    return <Loading message="" />;
   }
 
   return (
     <SafeAreaProvider>
       <NavigationContainer>
-        <MainStack />
-        <LocationErrorModal 
-          isVisible={showLocationErrorModal}
-          type={locationErrorType}
-          onClose={clearLocationError}
-        />
+        <RootNavigator />
+        <LocationErrorModal />
       </NavigationContainer>
     </SafeAreaProvider>
   );

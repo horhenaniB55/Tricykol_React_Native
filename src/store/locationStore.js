@@ -1,395 +1,276 @@
 import { create } from 'zustand';
-import {
-  getCurrentLocation,
-  watchLocation,
-  isWithinRadius,
-  calculateDistance,
-  checkLocationServices,
-  getLocationPermissionStatus,
-  watchLocationServices,
-  initializeLocation
-} from '../utils/location';
-import firestore from '@react-native-firebase/firestore';
-import { useAuthStore } from './authStore';
 import * as Location from 'expo-location';
+import { locationService } from '../services/locationService';
+import firestore from '@react-native-firebase/firestore';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Constants
-const BOOKING_RADIUS = 700; // meters
-const PICKUP_ARRIVAL_RADIUS = 50; // meters
-const DROPOFF_ARRIVAL_RADIUS = 300; // meters
-
-/**
- * Location store for managing location state and related functionality
- */
 const useLocationStore = create((set, get) => ({
   // Location state
   currentLocation: null,
   isTracking: false,
-  lastUpdate: null,
-  nearbyBookings: [],
-  activeTrip: null,
-  bookingsUnsubscribe: null,
-  locationServicesWatcher: null,
-  locationInitialized: false,
-
-  // Location status state
+  locationError: null,
   locationPermission: 'undetermined',
   locationServicesEnabled: true,
   showLocationErrorModal: false,
-  locationErrorType: null, // 'permission' or 'services'
-  locationError: null,
+  locationErrorType: null,
+  dismissedErrorTypes: new Set(),
 
-  // Location status actions
-  setLocationError: (errorType, error = null) => {
-    console.log('Setting location error:', errorType);
-    
-    // Set this state immediately and explicitly
-    set({
-      locationErrorType: errorType,
-      locationError: error,
-      showLocationErrorModal: true
-    });
+  // Set current location and save to AsyncStorage
+  updateCurrentLocation: (location) => {
+    if (location && typeof location.latitude === 'number' && typeof location.longitude === 'number') {
+      console.log('[LocationStore] Updating current location');
+      
+      // Ensure location has a timestamp
+      const locationWithTimestamp = {
+        ...location,
+        timestamp: location.timestamp || new Date().getTime()
+      };
+      
+      // Update state
+      set({ currentLocation: locationWithTimestamp });
+      
+      // Use locationService to save to AsyncStorage
+      locationService.updateLocation(locationWithTimestamp)
+        .then(success => {
+          if (success) {
+            console.log('[LocationStore] Location successfully updated and saved');
+          }
+        })
+        .catch(error => {
+          console.error('[LocationStore] Failed to update location:', error);
+        });
+    }
   },
 
+  // Initialize location services
+  initializeLocation: async () => {
+    console.log('[LocationStore] Starting location initialization');
+    try {
+      await locationService.initialize();
+      
+      console.log('[LocationStore] Fetching last known location');
+      // Get last known location from storage
+      const lastLocation = await locationService.getLastKnownLocation();
+      if (lastLocation) {
+        console.log('[LocationStore] Setting last known location:', lastLocation);
+        set({ currentLocation: lastLocation });
+      } else {
+        console.log('[LocationStore] No last known location available');
+      }
+
+      console.log('[LocationStore] Setting successful initialization state');
+      set({ 
+        locationServicesEnabled: true,
+        locationPermission: 'granted',
+        locationError: null,
+        showLocationErrorModal: false
+      });
+
+      console.log('[LocationStore] Location initialization complete');
+      return true;
+    } catch (error) {
+      console.error('[LocationStore] Location initialization error:', error);
+      
+      // Set appropriate error state
+      if (error.message.includes('permission')) {
+        console.log('[LocationStore] Setting permission denied error state');
+        set({
+          locationErrorType: 'permission',
+          locationPermission: 'denied',
+          showLocationErrorModal: true
+        });
+      } else if (error.message.includes('disabled')) {
+        console.log('[LocationStore] Setting services disabled error state');
+        set({
+          locationErrorType: 'services',
+          locationServicesEnabled: false,
+          showLocationErrorModal: true
+        });
+      }
+      
+      set({ locationError: error.message });
+      return false;
+    }
+  },
+
+  // Start location tracking
+  startLocationTracking: async () => {
+    console.log('[LocationStore] Starting location tracking');
+    try {
+      // Check if already tracking
+      if (get().isTracking) {
+        console.log('[LocationStore] Already tracking, no need to start again');
+        return;
+      }
+
+      // Get driver data from AsyncStorage instead of directly from authStore
+      const driverJson = await AsyncStorage.getItem('driver');
+      if (!driverJson) {
+        console.log('[LocationStore] No authenticated driver found');
+        throw new Error('Driver not authenticated');
+      }
+      
+      const driver = JSON.parse(driverJson);
+      if (!driver || !driver.id) {
+        console.log('[LocationStore] Invalid driver data found');
+        throw new Error('Driver not authenticated');
+      }
+
+      // Set tracking state to true without reinitializing services
+      set({ isTracking: true });
+      console.log('[LocationStore] Set tracking state to true');
+
+      // Only update location in Firestore if we have a valid location
+      const currentLocation = get().currentLocation;
+      const hasValidLocation = currentLocation && 
+                             currentLocation.latitude && 
+                             currentLocation.longitude;
+                             
+      console.log('[LocationStore] Current location validity:', hasValidLocation);
+
+      if (hasValidLocation) {
+        // Initial update in Firestore with existing location (one-time only)
+        console.log('[LocationStore] Initial Firestore update with existing location (one-time)');
+        await firestore()
+          .collection('drivers')
+          .doc(driver.id)
+          .update({
+            currentLocation: {
+              ...currentLocation,
+              updatedAt: firestore.FieldValue.serverTimestamp()
+            },
+            lastLocationUpdate: firestore.FieldValue.serverTimestamp()
+          });
+      } else {
+        // Only get a new location if we don't have a valid one
+        console.log('[LocationStore] No valid location, attempting to get current position');
+        try {
+          const currentPosition = await Location.getCurrentPositionAsync({
+            accuracy: Location.Accuracy.Balanced
+          });
+          
+          if (currentPosition) {
+            const newLocation = {
+              latitude: currentPosition.coords.latitude,
+              longitude: currentPosition.coords.longitude,
+              timestamp: currentPosition.timestamp,
+              accuracy: currentPosition.coords.accuracy
+            };
+            
+            console.log('[LocationStore] Got new position, updating state');
+            set({ currentLocation: newLocation });
+            
+            // Initial update in Firestore (one-time only)
+            console.log('[LocationStore] Initial Firestore update with new position (one-time)');
+            await firestore()
+              .collection('drivers')
+              .doc(driver.id)
+              .update({
+                currentLocation: {
+                  ...newLocation,
+                  updatedAt: firestore.FieldValue.serverTimestamp()
+                },
+                lastLocationUpdate: firestore.FieldValue.serverTimestamp()
+              });
+          }
+        } catch (error) {
+          console.error('[LocationStore] Error getting current position:', error);
+          // Continue anyway - tracking will eventually get location
+        }
+      }
+
+      // Only start location service tracking if not already tracking
+      if (!locationService.isTracking()) {
+        console.log('[LocationStore] Starting location service tracking');
+        await locationService.startTracking();
+        console.log('[LocationStore] Location tracking started successfully');
+      } else {
+        console.log('[LocationStore] Location service already tracking');
+      }
+    } catch (error) {
+      console.error('[LocationStore] Error starting location tracking:', error);
+      set({ locationError: error.message, isTracking: false });
+    }
+  },
+
+  // Stop location tracking
+  stopLocationTracking: async () => {
+    console.log('[LocationStore] Stopping location tracking');
+    try {
+      // Get driver data from AsyncStorage instead of directly from authStore
+      const driverJson = await AsyncStorage.getItem('driver');
+      let driverId = null;
+      
+      if (driverJson) {
+        const driver = JSON.parse(driverJson);
+        driverId = driver?.id;
+      }
+      
+      if (driverId) {
+        console.log('[LocationStore] Updating last known location');
+        // Update driver's last known location in Firestore
+        await firestore()
+          .collection('drivers')
+          .doc(driverId)
+          .update({ 
+            lastLocationUpdate: firestore.FieldValue.serverTimestamp()
+          });
+      }
+
+      console.log('[LocationStore] Stopping location service tracking');
+      // Stop tracking but keep last known location
+      locationService.stopTracking();
+      set({ isTracking: false });
+      console.log('[LocationStore] Location tracking stopped successfully');
+    } catch (error) {
+      console.error('[LocationStore] Error stopping location tracking:', error);
+      set({ locationError: error.message });
+    }
+  },
+
+  // Clear location error
   clearLocationError: () => {
-    console.log('Clearing location error state');
+    console.log('[LocationStore] Clearing location error state');
     set({
-      locationErrorType: null,
       locationError: null,
+      locationErrorType: null,
       showLocationErrorModal: false
     });
   },
 
-  startWatchingLocationAvailability: () => {
-    const watcher = watchLocationServices(async (available) => {
-      console.log('Location services availability changed:', available);
-      set({ locationServicesEnabled: available });
-
-      if (!available) {
-        // Force driver offline when location is disabled
-        const { driver } = useAuthStore.getState();
-        if (driver?.status === 'online') {
-          try {
-            // Update Firestore
-            await firestore()
-              .collection('drivers')
-              .doc(driver.id)
-              .update({ 
-                status: 'offline',
-                lastStatusUpdate: firestore.FieldValue.serverTimestamp()
-              });
-
-            // Update local state
-            useAuthStore.getState().setDriver({
-              ...driver,
-              status: 'offline'
-            });
-
-            // Stop tracking
-            get().stopLocationTracking();
-            
-            console.log('Driver set to offline due to disabled location services');
-          } catch (error) {
-            console.error('Error setting driver offline:', error);
-          }
-        }
-      } else {
-        // Location services became available
-        try {
-          const location = await getCurrentLocation({
-            accuracy: Location.Accuracy.Balanced,
-            maximumAge: 10000
-          });
-
-          if (location) {
-            set({ 
-              currentLocation: location,
-              locationInitialized: true,
-              lastUpdate: new Date().toISOString()
-            });
-          }
-        } catch (error) {
-          console.error('Error getting location after services enabled:', error);
-        }
-      }
-    });
-    set({ locationServicesWatcher: watcher });
+  // Get last known location
+  getLastKnownLocation: async () => {
+    console.log('[LocationStore] Fetching last known location');
+    const location = await locationService.getLastKnownLocation();
+    console.log('[LocationStore] Last known location:', location);
+    return location;
   },
 
-  stopWatchingLocationAvailability: () => {
-    const { locationServicesWatcher } = get();
-    if (locationServicesWatcher) {
-      locationServicesWatcher();
-      set({ locationServicesWatcher: null });
-    }
-  },
-
-  checkLocationStatus: async () => {
-    try {
-      // Check services first
-      const servicesEnabled = await Location.hasServicesEnabledAsync();
-      const permissionStatus = await getLocationPermissionStatus();
-
-      set({
-        locationServicesEnabled: servicesEnabled,
-        locationPermission: permissionStatus.foreground,
-        showLocationErrorModal: !servicesEnabled || permissionStatus.foreground !== "granted",
-        locationErrorType: !servicesEnabled ? "services" : 
-                         permissionStatus.foreground !== "granted" ? "permission" : null
-      });
-
-      return {
-        ...permissionStatus,
-        services: servicesEnabled ? 'enabled' : 'disabled'
-      };
-    } catch (error) {
-      console.error('Error checking location status:', error);
-      set({ locationError: error.message });
-      return null;
-    }
-  },
-
-  initializeLocation: async () => {
-    // Don't try to initialize if location services are disabled
-    const servicesEnabled = await Location.hasServicesEnabledAsync();
-    if (!servicesEnabled) {
-      set({ 
-        locationServicesEnabled: false,
-        locationErrorType: 'services',
-        showLocationErrorModal: true 
-      });
-      return null;
-    }
-
-    if (get().locationInitialized) return;
-
-    try {
-      const status = await get().checkLocationStatus();
-      const location = await getCurrentLocation({
-        accuracy: Location.Accuracy.Balanced,
-        maximumAge: 10000
-      });
-
-      set({ 
-        currentLocation: location,
-        locationInitialized: true,
-        locationServicesEnabled: true
-      });
-
-      return location;
-    } catch (error) {
-      console.error('Location initialization error:', error);
-      set({ 
-        locationError: error.message,
-        locationServicesEnabled: false 
-      });
-      return null;
-    }
-  },
-
-  // Location tracking actions with optimized subscription handling
-  startLocationTracking: async () => {
-    try {
-      // Check location services first before trying to get location
-      const servicesEnabled = await Location.hasServicesEnabledAsync();
-      if (!servicesEnabled) {
-        set({ 
-          locationServicesEnabled: false,
-          locationErrorType: 'services',
-          showLocationErrorModal: true 
-        });
-        return;
-      }
-
-      // Rest of tracking logic...
-      if (!get().locationInitialized) {
-        await get().initializeLocation();
-      }
-
-      const status = await get().checkLocationStatus();
-      if (!status || status.foreground !== "granted") {
-        return;
-      }
-
-      set({ isTracking: true });
-
-      // Watch location with balanced accuracy
-      return await watchLocation(
-        (newLocation) => {
-          set({
-            currentLocation: newLocation,
-            lastUpdate: new Date().toISOString(),
-          });
-
-          // If there's an active trip, check for arrival
-          const activeTrip = get().activeTrip;
-          if (activeTrip) {
-            get().checkArrival(newLocation, activeTrip);
-          }
-
-          // Update nearby bookings if subscribed
-          get().updateBookingsWithLocation(newLocation);
-        },
-        (error) => {
-          console.log('watchLocation error', error);
-          set({
-            locationError: error.message,
-            lastUpdate: new Date().toISOString(),
-          });
-        },
-        {
-          timeInterval: 5000,
-          distanceInterval: 10,
-          accuracy: Location.Accuracy.Balanced
-        }
-      );
-    } catch (error) {
-      console.error('Error starting location tracking:', error);
-      throw error;
-    }
-  },
-
-  stopLocationTracking: () => {
+  // Cleanup resources
+  cleanup: () => {
+    console.log('[LocationStore] Starting cleanup');
+    locationService.cleanup();
     set({
       isTracking: false,
-      lastUpdate: new Date().toISOString(),
+      currentLocation: null,
+      locationError: null,
+      locationErrorType: null,
+      showLocationErrorModal: false
     });
+    console.log('[LocationStore] Cleanup complete');
   },
 
-  // Trip related actions
-  setActiveTrip: (trip) => {
-    set({ activeTrip: trip });
-  },
-
-  checkArrival: (currentLocation, trip) => {
-    if (!currentLocation || !trip) return;
-
-    const { dropoffLocation, pickupLocation, status } = trip;
-    const location = status === 'picking_up' ? pickupLocation : dropoffLocation;
-
-    // Check if arrived within 300m radius for dropoff
-    if (status === 'in_progress') {
-      const isNearDropoff = isWithinRadius(
-        currentLocation,
-        dropoffLocation,
-        DROPOFF_ARRIVAL_RADIUS
-      );
-
-      if (isNearDropoff) {
-        set({ arrivedAtDestination: true });
-      }
-    }
-
-    // Check if arrived at pickup location
-    if (status === 'picking_up') {
-      const isAtPickup = isWithinRadius(
-        currentLocation,
-        pickupLocation,
-        PICKUP_ARRIVAL_RADIUS
-      );
-
-      if (isAtPickup) {
-        set({ arrivedAtPickup: true });
-      }
-    }
-  },
-
-  // Optimized booking subscription handling
-  startBookingSubscription: () => {
-    // Don't start a new subscription if one already exists
-    if (get().bookingsUnsubscribe) {
-      return;
-    }
-
-    try {
-      // Query for pending bookings
-      const bookingsQuery = firestore()
-        .collection('bookings')
-        .where('status', '==', 'pending');
-
-      // Subscribe to bookings updates
-      const unsubscribe = bookingsQuery.onSnapshot(
-        (snapshot) => {
-          if (!get().isTracking) return; // Don't process updates if not tracking
-
-          const { currentLocation } = get();
-          if (!currentLocation) return;
-
-          const bookings = [];
-          
-          snapshot.docChanges().forEach(change => {
-            const booking = {
-              id: change.doc.id,
-              ...change.doc.data(),
-            };
-
-            // Handle changes based on type
-            switch (change.type) {
-              case 'added':
-              case 'modified':
-                if (isWithinRadius(currentLocation, booking.pickupLocation, BOOKING_RADIUS)) {
-                  bookings.push({
-                    ...booking,
-                    distance: calculateDistance(currentLocation, booking.pickupLocation),
-                  });
-                }
-                break;
-              // 'removed' is handled automatically since we only include current snapshot data
-            }
-          });
-
-          // Merge with existing bookings and sort
-          const existingBookings = get().nearbyBookings;
-          const updatedBookings = [
-            ...existingBookings.filter(b => !bookings.find(nb => nb.id === b.id)),
-            ...bookings
-          ].sort((a, b) => a.distance - b.distance);
-
-          set({ nearbyBookings: updatedBookings });
-        },
-        (error) => {
-          console.error('Error in bookings subscription:', error);
-          set({ locationError: 'Failed to fetch nearby bookings' });
-        }
-      );
-
-      set({ bookingsUnsubscribe: unsubscribe });
-    } catch (error) {
-      console.error('Error setting up bookings subscription:', error);
-      set({ locationError: 'Failed to start booking updates' });
-    }
-  },
-
-  stopBookingSubscription: () => {
-    const { bookingsUnsubscribe } = get();
-    if (bookingsUnsubscribe) {
-      bookingsUnsubscribe();
-      set({ bookingsUnsubscribe: null });
-    }
-  },
-
- 
-  updateBookingsWithLocation: (newLocation) => {
-    const { nearbyBookings } = get();
-    if (!nearbyBookings.length) return;
-
-    const updatedBookings = nearbyBookings.map(booking => ({
-      ...booking,
-      distance: calculateDistance(newLocation, booking.pickupLocation),
-    }))
-    .filter(booking => booking.distance <= BOOKING_RADIUS)
-    .sort((a, b) => a.distance - b.distance);
-
-    set({ nearbyBookings: updatedBookings });
-  },
-
-  // State selectors
-  selectNearbyBookings: () => get().nearbyBookings,
-  selectCurrentLocation: () => get().currentLocation,
-  selectLocationError: () => get().locationError,
-  selectIsTracking: () => get().isTracking,
-  selectLastUpdate: () => get().lastUpdate,
-  selectActiveTrip: () => get().activeTrip,
+  // Set location error state
+  setLocationError: ({ errorType, errorMessage, locationPermission, locationServicesEnabled }) => {
+    console.log('[LocationStore] Setting location error:', errorType, errorMessage);
+    set({
+      locationError: errorMessage,
+      locationErrorType: errorType,
+      showLocationErrorModal: true,
+      locationPermission: locationPermission || get().locationPermission,
+      locationServicesEnabled: locationServicesEnabled !== undefined ? locationServicesEnabled : get().locationServicesEnabled
+    });
+  }
 }));
 
 export default useLocationStore;

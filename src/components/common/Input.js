@@ -62,7 +62,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 14,
-    color: COLORS.TEXT_SECONDARY,
+    color: COLORS.WHITE,
     marginBottom: 8,
   },
   input: {
@@ -73,7 +73,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     fontSize: 16,
     color: COLORS.TEXT,
-    backgroundColor: COLORS.WHITE,
+    backgroundColor: COLORS.GRAY_LIGHT,
   },
   inputError: {
     borderColor: COLORS.ERROR,

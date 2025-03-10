@@ -9,13 +9,22 @@ export const SCREENS = {
   // Auth screens
   LOGIN: 'Login',
   OTP_VERIFICATION: 'OtpVerification',
+  WEB_REGISTRATION: 'WebRegistration',
   
   // Main screens
   HOME: 'Home',
   PROFILE: 'Profile',
   WALLET: 'Wallet',
   BOOKINGS: 'Bookings',
+  BOOKING_GROUP_DETAILS: 'BookingGroupDetails',
   TRIP_DETAILS: 'TripDetails',
+  BOOKING_DETAILS: 'BookingDetails',
+  REQUEST_SENT: 'RequestSent',
+  TOP_UP_WALLET: 'TopUpWallet',
+  TOP_UP_TICKET: 'TopUpTicket',
+  TRIP_HISTORY: 'TripHistory',
+  NOTIFICATIONS: 'Notifications',
+  CURRENT_RIDE: 'CurrentRide',
 };
 
 /**
@@ -23,6 +32,7 @@ export const SCREENS = {
  */
 export const COLORS = {
   PRIMARY: '#00BCD4',
+  DARK_PRIMARY: '#263E61',
   SECONDARY: '#0097A7',
   ACCENT: '#FFC107',
   BACKGROUND: '#F5F5F5',
@@ -50,10 +60,11 @@ export const API = {
  */
 export const COLLECTIONS = {
   DRIVERS: 'drivers',
-  BOOKINGS: 'bookings',
-  DRIVER_REQUESTS: 'driverRequests',
   WALLETS: 'wallets',
+  BOOKINGS: 'bookings',
+  TRIPS: 'trips',
   TRANSACTIONS: 'transactions',
+  NOTIFICATIONS: 'notifications',
 };
 
 /**
@@ -101,4 +112,22 @@ export const FEES = {
   BASE_FARE: 25, // 25 pesos for first 1 km
   ADDITIONAL_KM_RATE: 8, // 8 pesos for each km after the first 1 km
   SYSTEM_FEE_PERCENTAGE: 12, // 12% system fee
+};
+
+/**
+ * Driver request status options
+ */
+export const DRIVER_REQUEST_STATUS = {
+  PENDING: 'pending',
+  ACCEPTED: 'accepted',
+  REJECTED: 'rejected',
+};
+
+/**
+ * Notification types
+ */
+export const NOTIFICATION_TYPES = {
+  DRIVER_REQUEST: 'driver_request',
+  REQUEST_ACCEPTED: 'request_accepted',
+  REQUEST_REJECTED: 'request_rejected',
 };
