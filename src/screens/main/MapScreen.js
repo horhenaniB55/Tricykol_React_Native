@@ -178,6 +178,7 @@ export const MapScreen = () => {
     // Memoize and debounce map animation to reduce lag
     const lastAnimationTime = useRef(0);
     const animationTimeoutRef = useRef(null);
+    const updateStorageRef = useRef(null);
     
     // Optimize map animation with debouncing to prevent rapid re-renders
     useEffect(() => {
@@ -267,23 +268,17 @@ export const MapScreen = () => {
     // Optimized center location handler with throttling and cleanup
     const handleCenterLocation = useCallback(async () => {
       try {
-        if (isLocationLoading) return; // Prevent multiple simultaneous requests
+        if (isLocationLoading) return;
         
         setIsLocationLoading(true);
-        console.log('[MapScreen] Manual location refresh initiated');
-        
-        // Get fresh location with priority: GPS → Storage → Firestore
         const latestLocation = await locationService.getLastKnownLocation();
         
         if (!latestLocation) {
-          console.log('[MapScreen] No location available for centering');
           setIsLocationLoading(false);
           return;
         }
 
-        // Optimized update sequence
         if (mapRef.current) {
-          // Direct map animation without state updates
           mapRef.current.animateToRegion({
             latitude: latestLocation.latitude,
             longitude: latestLocation.longitude,
@@ -292,24 +287,23 @@ export const MapScreen = () => {
           }, 350);
         }
 
-        // Debounced storage update
-        const updateStorage = throttle(async (location) => {
+        // Store the throttle function in the ref
+        updateStorageRef.current = throttle(async (location) => {
           await AsyncStorage.setItem('last_known_location', JSON.stringify(location));
           useLocationStore.setState({ currentLocation: location });
         }, 1000);
 
-        updateStorage({
+        updateStorageRef.current({
           ...latestLocation,
           timestamp: Date.now()
         });
 
       } catch (error) {
-        console.error('[MapScreen] Location centering error:', error);
+        console.error('Location centering error:', error);
       } finally {
-        // Ensure loading state clears even if component unmounts
         requestAnimationFrame(() => setIsLocationLoading(false));
       }
-    }, [isLocationLoading]); // Only dependency is loading state
+    }, [isLocationLoading]);
     
     // Cleanup all listeners, timers and throttled operations
     useEffect(() => {
@@ -318,8 +312,10 @@ export const MapScreen = () => {
             if (animationTimeoutRef.current) {
                 clearTimeout(animationTimeoutRef.current);
             }
-            // Cancel any pending storage updates
-            updateStorage?.cancel();
+            if (updateStorageRef.current) {
+                updateStorageRef.current.cancel();
+                updateStorageRef.current = null;
+            }
         };
     }, []);
 
