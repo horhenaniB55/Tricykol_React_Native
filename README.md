@@ -2,6 +2,15 @@
 
 Mobile application for Tricykol drivers built with React Native and Expo.
 
+<center>
+    <img src="./screenshots/login.jpg" alt="login" style="width:300px; height:auto;">
+
+    <img src="./screenshots/map.jpg" alt="map" style="width:300px; height:auto;">
+
+    <img src="./screenshots/rides.jpg" alt="rides" style="width:300px; height:auto;">
+</center>
+
+
 ## Project Structure
 
 ```
