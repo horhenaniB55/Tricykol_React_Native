@@ -232,7 +232,7 @@ const styles = StyleSheet.create({
   },
   loginButton: {
     marginTop: 20,
-    backgroundColor: COLORS.PRIMARY,
+    backgroundColor: COLORS.LIGHT_PRIMARY,
   },
   registerButton: {
     marginTop: 20,
@@ -241,10 +241,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: COLORS.PRIMARY,
+    borderColor: COLORS.LIGHT_PRIMARY,
   },
   registerText: {
-    color: COLORS.PRIMARY,
+    color: COLORS.LIGHT_PRIMARY,
     fontSize: 16,
     fontWeight: '600',
   },
